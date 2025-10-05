@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Compras</title>
+<style>
+  :root {
+    --cor-primaria: #4a90e2;
+    --cor-secundaria: #f5f7fa;
+    --cor-borda: #ccc;
+    --cor-texto: #333;
+    --raio: 8px;
+    --espaco: 12px;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background: var(--cor-secundaria);
+    color: var(--cor-texto);
+  }
+
+  .container {
+    background: white;
+    border-radius: var(--raio);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 90%;
+    max-width: 600px;
+    margin: 0 auto 20px auto;
+    padding: 20px;
+  }
+
+  h1, h2 {
+    text-align: center;
+    color: var(--cor-primaria);
+  }
+
+  label {
+    display: block;
+    margin-top: var(--espaco);
+    margin-bottom: 4px;
+  }
+
+  input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: var(--espaco);
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio);
+    font-size: 1rem;
+  }
+
+  button {
+    background: var(--cor-primaria);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  button:hover { background: #357abd; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  th, td {
+    border: 1px solid var(--cor-borda);
+    padding: 8px;
+    text-align: center;
+  }
+
+  th { background: var(--cor-primaria); color: white; }
+
+  .futuras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .fatura-card {
+    background: #eaf2fd;
+    padding: 12px;
+    border-radius: var(--raio);
+    cursor: pointer;
+  }
+
+  .fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
+  .fatura-card p { margin: 2px 0; font-size: 0.9rem; }
+
+  .detalhe-mes {
+    display: none;
+    margin-top: 10px;
+    background: #f0f4fb;
+    border-radius: var(--raio);
+    padding: 10px;
+  }
+
+  .detalhe-mes h4 { margin: 0 0 5px 0; font-size: 0.95rem; color: #333; }
+  .detalhe-mes p { margin: 2px 0; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Nova Compra</h1>
+  <form id="formCompra">
+    <label>Tipo de compra</label>
+    <select id="tipoCompra">
+      <option value="cartao">Cartão de crédito</option>
+      <option value="fora">Fora do cartão</option>
+    </select>
+
+    <label>Descrição</label>
+    <input type="text" id="descricao" placeholder="Ex: supermercado">
+
+    <label>Valor</label>
+    <input type="number" id="valor" step="0.01" min="0.01">
+
+    <div id="campoCartao">
+      <label>Cartão</label>
+      <select id="cartao">
+        <option value="">Selecione o cartão</option>
+        <option value="Nubank">Nubank</option>
+        <option value="Inter">Inter</option>
+        <option value="Itaú">Itaú</option>
+      </select>
+    </div>
+
+    <label>Parcelas</label>
+    <input type="number" id="parcelas" value="1" min="1">
+
+    <label>Data</label>
+    <input type="date" id="data">
+
+    <button type="submit">Adicionar Compra</button>
+  </form>
+</div>
+
+<div class="container">
+  <h2>Compras</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Descrição</th>
+        <th>Valor Total</th>
+        <th>Cartão</th>
+        <th>Parcelas</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaCompras"></tbody>
+  </table>
+</div>
+
+<div class="container">
+  <h2>Faturas Futuras</h2>
+  <div class="futuras" id="futurasFaturas"></div>
+  <div class="detalhe-mes" id="detalheMesDiv"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
+  authDomain: "controle-contas-86adb.firebaseapp.com",
+  projectId: "controle-contas-86adb",
+  storageBucket: "controle-contas-86adb.appspot.com",
+  messagingSenderId: "349383116773",
+  appId: "1:349383116773:web:c0aa127faf7979bc76510c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const form = document.getElementById("formCompra");
+const tabela = document.getElementById("tabelaCompras");
+const futurasDiv = document.getElementById("futurasFaturas");
+const detalheMesDiv = document.getElementById("detalheMesDiv");
+const tipoCompraEl = document.getElementById("tipoCompra");
+const campoCartao = document.getElementById("campoCartao");
+const cartaoEl = document.getElementById("cartao");
+
+// Mostrar/ocultar campo cartão
+tipoCompraEl.addEventListener("change", () => {
+  campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
+});
+
+// Adicionar compra
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const tipo = tipoCompraEl.value;
+  const descricao = document.getElementById("descricao").value;
+  const valor = parseFloat(document.getElementById("valor").value);
+  const parcelas = parseInt(document.getElementById("parcelas").value) || 1;
+  const data = document.getElementById("data").value;
+  const cartao = tipo === "cartao" ? cartaoEl.value : "Fora do cartão";
+
+  if (!descricao || !valor || !data) return alert("Preencha todos os campos!");
+  if (tipo === "cartao" && !cartao) return alert("Escolha um cartão!");
+
+  await addDoc(collection(db,"compras"),{
+    tipo,
+    descricao,
+    valor,
+    parcelas,
+    data,
+    cartao
+  });
+
+  form.reset();
+  campoCartao.style.display = "block";
+  carregarCompras();
+});
+
+// Carregar compras e faturas
+async function carregarCompras() {
+  tabela.innerHTML = "";
+  futurasDiv.innerHTML = "";
+  detalheMesDiv.innerHTML = "";
+
+  const q = query(collection(db,"compras"), orderBy("data"));
+  const snap = await getDocs(q);
+  const compras = [];
+  snap.forEach(doc => compras.push(doc.data()));
+
+  // Preencher tabela de compras
+  compras.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${c.tipo}</td>
+      <td>${c.descricao}</td>
+      <td>R$ ${c.valor.toFixed(2)}</td>
+      <td>${c.cartao}</td>
+      <td>${c.parcelas}</td>
+      <td>${c.data}</td>
+    `;
+    tabela.appendChild(tr);
+  });
+
+  // Agrupar faturas futuras
+  const faturas = {};
+  compras.forEach(c => {
+    const mes = c.data.substring(0,7);
+    if (!faturas[mes]) faturas[mes] = {};
+    if (!faturas[mes][c.cartao]) faturas[mes][c.cartao] = 0;
+    faturas[mes][c.cartao] += c.valor / c.parcelas;
+  });
+
+  // Ordenar meses e criar cards
+  Object.keys(faturas).sort().forEach(mes => {
+    const divCard = document.createElement("div");
+    divCard.className = "fatura-card";
+    divCard.innerHTML = `<h3>${mes}</h3>`;
+    Object.entries(faturas[mes]).forEach(([cartao, valor]) => {
+      divCard.innerHTML += `<p>${cartao}: R$ ${valor.toFixed(2)}</p>`;
+    });
+    divCard.addEventListener("click", () => detalharMes(mes, compras));
+    futurasDiv.appendChild(divCard);
+  });
+}
+
+// Detalhar mês
+function detalharMes(mes, compras) {
+  detalheMesDiv.innerHTML = `<h4>Detalhes do mês: ${mes}</h4>`;
+  compras.filter(c => c.data.startsWith(mes)).forEach(c => {
+    const valorParcela = c.valor / c.parcelas;
+    detalheMesDiv.innerHTML += `<p>${c.cartao} - ${c.descricao} - R$ ${valorParcela.toFixed(2)} (${c.parcelas}x)</p>`;
+  });
+  detalheMesDiv.style.display = "block";
+}
+
+window.addEventListener("load", carregarCompras);
+</script>
+</body>
+</html>
