@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Controle de Compras</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .formulario {
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-width: 500px;
+      margin: 0 auto 20px auto;
+    }
+    .formulario input, .formulario select, .formulario button {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+    .formulario button {
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+    .formulario button:hover {
+      background: #0056b3;
+    }
+    .faturas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .fatura-card {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .fatura-card h3 {
+      margin: 0 0 10px 0;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <h1>💳 Controle de Compras</h1>
+
+  <div class="formulario">
+    <input type="text" id="descricao" placeholder="Descrição da compra">
+    <input type="number" id="valor" placeholder="Valor (R$)">
+    <select id="cartao">
+      <option value="Nubank">Nubank</option>
+      <option value="Itaú">Itaú</option>
+      <option value="Santander">Santander</option>
+    </select>
+    <input type="number" id="parcelas" placeholder="Parcelas (1 = à vista)">
+    <button onclick="adicionarCompra()">Adicionar Compra</button>
+  </div>
+
+  <div class="faturas" id="faturas"></div>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
+      authDomain: "controle-contas-86adb.firebaseapp.com",
+      projectId: "controle-contas-86adb",
+      storageBucket: "controle-contas-86adb.appspot.com",
+      messagingSenderId: "349383116773",
+      appId: "1:349383116773:web:c0aa127faf7979bc76510c"
+    };
+
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Adicionar compra
+    async function adicionarCompra() {
+      const descricao = document.getElementById("descricao").value;
+      const valor = parseFloat(document.getElementById("valor").value);
+      const cartao = document.getElementById("cartao").value;
+      const parcelas = parseInt(document.getElementById("parcelas").value) || 1;
+
+      if (!descricao || !valor) {
+        alert("Preencha todos os campos!");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "compras"), {
+          descricao,
+          valor,
+          cartao,
+          parcelas,
+          data: new Date()
+        });
+        alert("Compra adicionada!");
+        carregarCompras();
+      } catch (e) {
+        console.error("Erro ao adicionar: ", e);
+      }
+    }
+
+    // Carregar compras
+    async function carregarCompras() {
+      const faturasDiv = document.getElementById("faturas");
+      faturasDiv.innerHTML = "";
+
+      const querySnapshot = await getDocs(collection(db, "compras"));
+      let compras = [];
+      querySnapshot.forEach(doc => {
+        compras.push(doc.data());
+      });
+
+      // Agrupar por cartão
+      const agrupado = compras.reduce((acc, compra) => {
+        if (!acc[compra.cartao]) acc[compra.cartao] = 0;
+        acc[compra.cartao] += compra.valor;
+        return acc;
+      }, {});
+
+      // Renderizar
+      for (let cartao in agrupado) {
+        const div = document.createElement("div");
+        div.className = "fatura-card";
+        div.innerHTML = `<h3>${cartao}</h3><p>Total: R$ ${agrupado[cartao].toFixed(2)}</p>`;
+        faturasDiv.appendChild(div);
+      }
+    }
+
+    carregarCompras();
+  </script>
+</body>
+</html>
