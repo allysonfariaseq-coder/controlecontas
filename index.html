@@ -62,9 +62,23 @@ button {
 
 button:hover { background: #357abd; }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th, td {
+  border: 1px solid var(--cor-borda);
+  padding: 8px;
+  text-align: center;
+}
+
+th { background: var(--cor-primaria); color: white; }
+
 .futuras {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
   margin-top: 15px;
 }
@@ -74,6 +88,10 @@ button:hover { background: #357abd; }
   padding: 12px;
   border-radius: var(--raio);
   cursor: pointer;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
@@ -129,8 +147,6 @@ button:hover { background: #357abd; }
         <option value="">Selecione o cartão</option>
         <option value="Nubank">Nubank</option>
         <option value="Inter">Inter</option>
-        <option value="C6">C6</option>
-        <option value="Bradesco">Bradesco</option>
         <option value="Itaú">Itaú</option>
         <option value="Banco do Brasil">Banco do Brasil</option>
         <option value="PicPay">PicPay</option>
@@ -146,6 +162,23 @@ button:hover { background: #357abd; }
 
     <button type="submit">Adicionar Compra</button>
   </form>
+</div>
+
+<div class="container">
+  <h2>Todas as Compras</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Descrição</th>
+        <th>Valor</th>
+        <th>Cartão</th>
+        <th>Parcelas</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaCompras"></tbody>
+  </table>
 </div>
 
 <div class="container">
@@ -195,8 +228,20 @@ document.getElementById("formCompra").addEventListener("submit", e => {
   document.getElementById("formCompra").reset();
   document.getElementById("data").value = getDataHoje();
   campoCartao.style.display = "block";
+  carregarCompras();
   preencherFaturas();
 });
+
+function carregarCompras() {
+  const tabela = document.getElementById("tabelaCompras");
+  tabela.innerHTML = "";
+  compras.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
+                    <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>`;
+    tabela.appendChild(tr);
+  });
+}
 
 function preencherFaturas() {
   const div = document.getElementById("futurasFaturas");
@@ -242,6 +287,7 @@ function preencherFaturas() {
     const ul = document.createElement("ul");
     comprasMes.forEach((c,i)=>{
       const li = document.createElement("li");
+      li.style.fontSize="0.85rem";
       li.innerHTML = `
         <span>${c.cartao} - ${c.descricao} - R$ ${c.valor.toFixed(2)} (${c.parcela})</span>
         <input type="checkbox" ${c.pago ? "checked" : ""} data-mes="${mes}" data-index="${i}">
@@ -256,22 +302,25 @@ function preencherFaturas() {
     cb.addEventListener('change', e=>{
       const mes = e.target.dataset.mes;
       const idx = parseInt(e.target.dataset.index);
-      faturas[mes][idx].pago = e.target.checked;
+      const item = faturas[mes][idx];
+      item.pago = e.target.checked;
       // atualizar no array principal
-      const item = compras.find(c=>{
+      const compraOriginal = compras.find(c=>{
         const data = new Date(c.data);
         const mesAno = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
-        return mesAno===mes && c.descricao===faturas[mes][idx].descricao && c.cartao===faturas[mes][idx].cartao;
+        return mesAno===mes && c.descricao===item.descricao && c.cartao===item.cartao;
       });
-      if(item) item.pago = e.target.checked;
+      if(compraOriginal) compraOriginal.pago = e.target.checked;
       salvar();
       preencherFaturas();
     });
   });
 }
 
-window.addEventListener("load", preencherFaturas);
+window.addEventListener("load", () => {
+  carregarCompras();
+  preencherFaturas();
+});
 </script>
-
 </body>
 </html>
