@@ -122,6 +122,10 @@ th { background: var(--cor-primaria); color: white; }
   background: #28a745;
   width: 0%;
 }
+
+#futurasFaturas {
+  display: none; /* Escondido até senha correta */
+}
 </style>
 </head>
 <body>
@@ -183,11 +187,27 @@ th { background: var(--cor-primaria); color: white; }
 
 <div class="container">
   <h2>Faturas Futuras / Acompanhamento Mensal</h2>
-  <div class="futuras" id="futurasFaturas"></div>
+  <div id="futurasFaturas" class="futuras"></div>
   <div class="detalhe-mes" id="detalheMesDiv"></div>
 </div>
 
 <script>
+const senhaAcesso = "1234"; // Defina sua senha aqui
+let acessoLiberado = false;
+
+function solicitarSenha() {
+  if(!acessoLiberado){
+    const tentativa = prompt("Digite a senha para acessar o acompanhamento mensal:");
+    if(tentativa===senhaAcesso){
+      acessoLiberado = true;
+      document.getElementById("futurasFaturas").style.display="grid";
+    } else {
+      alert("Senha incorreta!");
+      document.getElementById("futurasFaturas").style.display="none";
+    }
+  }
+}
+
 let compras = JSON.parse(localStorage.getItem('compras')) || [];
 
 function salvar() {
@@ -206,7 +226,6 @@ document.getElementById("data").value = getDataHoje();
 
 const tipoCompraEl = document.getElementById("tipoCompra");
 const campoCartao = document.getElementById("campoCartao");
-
 tipoCompraEl.addEventListener("change", () => {
   campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
 });
@@ -229,6 +248,7 @@ document.getElementById("formCompra").addEventListener("submit", e => {
   document.getElementById("data").value = getDataHoje();
   campoCartao.style.display = "block";
   carregarCompras();
+  solicitarSenha(); // Solicita senha para mostrar faturas
   preencherFaturas();
 });
 
@@ -244,6 +264,7 @@ function carregarCompras() {
 }
 
 function preencherFaturas() {
+  if(!acessoLiberado) return;
   const div = document.getElementById("futurasFaturas");
   div.innerHTML = "";
   const faturas = {};
@@ -290,36 +311,38 @@ function preencherFaturas() {
       li.style.fontSize="0.85rem";
       li.innerHTML = `
         <span>${c.cartao} - ${c.descricao} - R$ ${c.valor.toFixed(2)} (${c.parcela})</span>
-        <input type="checkbox" ${c.pago ? "checked" : ""} data-mes="${mes}" data-index="${i}">
+        <input type="checkbox" ${c.pago ? "checked" : ""} onchange="marcarPago('${mes}',${i},this)">
       `;
       ul.appendChild(li);
     });
     card.appendChild(ul);
     div.appendChild(card);
   });
+}
 
-  document.querySelectorAll('.fatura-card input[type="checkbox"]').forEach(cb=>{
-    cb.addEventListener('change', e=>{
-      const mes = e.target.dataset.mes;
-      const idx = parseInt(e.target.dataset.index);
-      const item = faturas[mes][idx];
-      item.pago = e.target.checked;
-      // atualizar no array principal
-      const compraOriginal = compras.find(c=>{
-        const data = new Date(c.data);
-        const mesAno = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
-        return mesAno===mes && c.descricao===item.descricao && c.cartao===item.cartao;
-      });
-      if(compraOriginal) compraOriginal.pago = e.target.checked;
-      salvar();
-      preencherFaturas();
-    });
+function marcarPago(mes, index, checkbox) {
+  const faturas = {};
+  compras.forEach(c => {
+    const data = new Date(c.data);
+    const valorParcela = c.valor / c.parcelas;
+    for (let i = 0; i < c.parcelas; i++) {
+      let m = data.getMonth() + 1 + i;
+      let a = data.getFullYear();
+      if (m > 12) { m -= 12; a += 1; }
+      const chave = `${a}-${String(m).padStart(2,'0')}`;
+      if (!faturas[chave]) faturas[chave] = [];
+      faturas[chave].push({ compra: c, parcela: i });
+    }
   });
+  const item = faturas[mes][index];
+  item.compra.pago = checkbox.checked;
+  salvar();
+  preencherFaturas();
 }
 
 window.addEventListener("load", () => {
   carregarCompras();
-  preencherFaturas();
+  solicitarSenha();
 });
 </script>
 </body>
