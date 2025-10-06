@@ -1,213 +1,277 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Controle de Compras</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f8f9fa;
-    }
-    h1, h2 {
-      text-align: center;
-      color: #333;
-    }
-    form {
-      background: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      margin-bottom: 20px;
-    }
-    form input, form select, form button {
-      margin: 5px;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    form button {
-      background: #28a745;
-      color: #fff;
-      cursor: pointer;
-      border: none;
-    }
-    .meses {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: center;
-    }
-    .mes-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 15px;
-      width: 300px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .progress-bar {
-      width: 100%;
-      height: 10px;
-      border-radius: 5px;
-      background: #e9ecef;
-      margin-top: 5px;
-      overflow: hidden;
-    }
-    .progress-fill {
-      height: 100%;
-      background: #28a745;
-      width: 0%;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-      font-size: 14px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Compras Offline</title>
+<style>
+:root {
+  --cor-primaria: #4a90e2;
+  --cor-secundaria: #f5f7fa;
+  --cor-borda: #ccc;
+  --cor-texto: #333;
+  --raio: 8px;
+  --espaco: 12px;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: var(--cor-secundaria);
+  color: var(--cor-texto);
+}
+
+.container {
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 600px;
+  margin: 0 auto 20px auto;
+  padding: 20px;
+}
+
+h1, h2 {
+  text-align: center;
+  color: var(--cor-primaria);
+}
+
+label {
+  display: block;
+  margin-top: var(--espaco);
+  margin-bottom: 4px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: var(--espaco);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  font-size: 1rem;
+}
+
+button {
+  background: var(--cor-primaria);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+button:hover { background: #357abd; }
+
+.futuras {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.fatura-card {
+  background: #eaf2fd;
+  padding: 12px;
+  border-radius: var(--raio);
+  cursor: pointer;
+}
+
+.fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
+.fatura-card p { margin: 2px 0; font-size: 0.9rem; }
+
+.detalhe-mes {
+  display: none;
+  margin-top: 10px;
+  background: #f0f4fb;
+  border-radius: var(--raio);
+  padding: 10px;
+}
+
+.detalhe-mes h4 { margin: 0 0 5px 0; font-size: 0.95rem; color: #333; }
+.detalhe-mes p { margin: 2px 0; font-size: 0.85rem; }
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: #e9ecef;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #28a745;
+  width: 0%;
+}
+</style>
 </head>
 <body>
-  <h1>Controle de Compras</h1>
 
+<div class="container">
+  <h1>Nova Compra</h1>
   <form id="formCompra">
-    <input type="text" id="descricao" placeholder="Descrição" required>
-    <input type="number" id="valor" placeholder="Valor" step="0.01" required>
-    <input type="date" id="data" required>
-
-    <select id="tipoConta" required>
-      <option value="">Selecione o tipo</option>
-      <option value="cartao">Cartão de Crédito</option>
-      <option value="fora">Fora do Cartão</option>
+    <label>Tipo de compra</label>
+    <select id="tipoCompra">
+      <option value="cartao">Cartão de crédito</option>
+      <option value="fora">Fora do cartão</option>
     </select>
 
-    <select id="cartao" style="display:none;">
-      <option value="">Selecione o cartão</option>
-      <option value="Nubank">Nubank</option>
-      <option value="Inter">Inter</option>
-      <option value="C6">C6</option>
-      <option value="Bradesco">Bradesco</option>
-      <option value="Itaú">Itaú</option>
-      <option value="Banco do Brasil">Banco do Brasil</option>
-      <option value="PicPay">PicPay</option>
-      <option value="Neon">Neon</option>
-    </select>
+    <label>Descrição</label>
+    <input type="text" id="descricao" placeholder="Ex: supermercado">
 
-    <input type="number" id="parcelas" placeholder="Parcelas" value="1" min="1">
-    <button type="submit">Adicionar</button>
+    <label>Valor</label>
+    <input type="number" id="valor" step="0.01" min="0.01">
+
+    <div id="campoCartao">
+      <label>Cartão</label>
+      <select id="cartao">
+        <option value="">Selecione o cartão</option>
+        <option value="Nubank">Nubank</option>
+        <option value="Inter">Inter</option>
+        <option value="C6">C6</option>
+        <option value="Bradesco">Bradesco</option>
+        <option value="Itaú">Itaú</option>
+        <option value="Banco do Brasil">Banco do Brasil</option>
+        <option value="PicPay">PicPay</option>
+        <option value="Neon">Neon</option>
+      </select>
+    </div>
+
+    <label>Parcelas</label>
+    <input type="number" id="parcelas" value="1" min="1">
+
+    <label>Data</label>
+    <input type="date" id="data">
+
+    <button type="submit">Adicionar Compra</button>
   </form>
+</div>
 
-  <h2>Acompanhamento Mensal</h2>
-  <div id="meses" class="meses"></div>
+<div class="container">
+  <h2>Faturas Futuras / Acompanhamento Mensal</h2>
+  <div class="futuras" id="futurasFaturas"></div>
+  <div class="detalhe-mes" id="detalheMesDiv"></div>
+</div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script>
+let compras = JSON.parse(localStorage.getItem('compras')) || [];
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
-      authDomain: "controle-contas-86adb.firebaseapp.com",
-      projectId: "controle-contas-86adb",
-      storageBucket: "controle-contas-86adb.firebasestorage.app",
-      messagingSenderId: "349383116773",
-      appId: "1:349383116773:web:c0aa127faf7979bc76510c"
-    };
+function salvar() {
+  localStorage.setItem('compras', JSON.stringify(compras));
+}
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+function getDataHoje() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
 
-    const form = document.getElementById("formCompra");
-    const mesesDiv = document.getElementById("meses");
-    const tipoConta = document.getElementById("tipoConta");
-    const cartaoSelect = document.getElementById("cartao");
-    const dataInput = document.getElementById("data");
+document.getElementById("data").value = getDataHoje();
 
-    // sempre sugere a data de hoje
-    dataInput.valueAsDate = new Date();
+const tipoCompraEl = document.getElementById("tipoCompra");
+const campoCartao = document.getElementById("campoCartao");
 
-    tipoConta.addEventListener("change", () => {
-      cartaoSelect.style.display = tipoConta.value === "cartao" ? "inline-block" : "none";
-      cartaoSelect.required = tipoConta.value === "cartao";
-    });
+tipoCompraEl.addEventListener("change", () => {
+  campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
+});
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const descricao = document.getElementById("descricao").value;
-      const valor = parseFloat(document.getElementById("valor").value);
-      const data = new Date(document.getElementById("data").value);
-      const tipo = tipoConta.value;
-      const cartao = tipo === "cartao" ? cartaoSelect.value : "Fora do Cartão";
-      const parcelas = parseInt(document.getElementById("parcelas").value);
+document.getElementById("formCompra").addEventListener("submit", e => {
+  e.preventDefault();
+  const tipo = tipoCompraEl.value;
+  const descricao = document.getElementById("descricao").value;
+  const valor = parseFloat(document.getElementById("valor").value);
+  const parcelas = parseInt(document.getElementById("parcelas").value) || 1;
+  const data = document.getElementById("data").value;
+  const cartao = tipo === "cartao" ? document.getElementById("cartao").value : "Fora do cartão";
 
-      for (let i = 0; i < parcelas; i++) {
-        let dataParcela = new Date(data);
-        dataParcela.setMonth(data.getMonth() + i);
-        await db.collection("compras").add({
-          descricao,
-          valor: valor / parcelas,
-          data: dataParcela.toISOString().split("T")[0],
-          tipo,
-          cartao,
-          pago: false,
-          parcela: `${i+1}/${parcelas}`
-        });
-      }
-      form.reset();
-      dataInput.valueAsDate = new Date();
-    });
+  if (!descricao || !valor || !data) { alert('Preencha todos os campos!'); return; }
+  if (tipo === "cartao" && !cartao) { alert('Escolha um cartão!'); return; }
 
-    db.collection("compras").onSnapshot(snapshot => {
-      const compras = [];
-      snapshot.forEach(doc => compras.push({ id: doc.id, ...doc.data() }));
-      renderMeses(compras);
-    });
+  compras.push({ tipo, descricao, valor, parcelas, data, cartao, pago: false });
+  salvar();
+  document.getElementById("formCompra").reset();
+  document.getElementById("data").value = getDataHoje();
+  campoCartao.style.display = "block";
+  preencherFaturas();
+});
 
-    function renderMeses(compras) {
-      mesesDiv.innerHTML = "";
-      const agrupado = {};
+function preencherFaturas() {
+  const div = document.getElementById("futurasFaturas");
+  div.innerHTML = "";
+  const faturas = {};
 
-      compras.forEach(c => {
-        const mesAno = c.data.slice(0,7);
-        if (!agrupado[mesAno]) agrupado[mesAno] = [];
-        agrupado[mesAno].push(c);
-      });
-
-      Object.keys(agrupado).sort().forEach(mesAno => {
-        const lista = agrupado[mesAno];
-        const total = lista.reduce((s, c) => s + c.valor, 0);
-        const pago = lista.filter(c => c.pago).reduce((s, c) => s + c.valor, 0);
-        const restante = total - pago;
-        const progresso = total > 0 ? (pago/total)*100 : 0;
-
-        const card = document.createElement("div");
-        card.className = "mes-card";
-        card.innerHTML = `
-          <h3>${mesAno}</h3>
-          <p>Total: R$ ${total.toFixed(2)}</p>
-          <p>Pago: R$ ${pago.toFixed(2)}</p>
-          <p>Restante: R$ ${restante.toFixed(2)}</p>
-          <div class="progress-bar"><div class="progress-fill" style="width:${progresso}%"></div></div>
-          <ul>
-            ${lista.map(c => `
-              <li>
-                <span>${c.descricao} (${c.cartao}) - R$ ${c.valor.toFixed(2)} ${c.parcela || ""}</span>
-                <input type="checkbox" ${c.pago ? "checked":""} onchange="togglePago('${c.id}', this.checked)">
-              </li>
-            `).join("")}
-          </ul>
-        `;
-        mesesDiv.appendChild(card);
+  compras.forEach(c => {
+    const data = new Date(c.data);
+    const valorParcela = c.valor / c.parcelas;
+    for (let i = 0; i < c.parcelas; i++) {
+      let mes = data.getMonth() + 1 + i;
+      let ano = data.getFullYear();
+      if (mes > 12) { mes -= 12; ano += 1; }
+      const mesChave = `${ano}-${String(mes).padStart(2,'0')}`;
+      if (!faturas[mesChave]) faturas[mesChave] = [];
+      faturas[mesChave].push({
+        descricao: c.descricao,
+        cartao: c.cartao,
+        valor: valorParcela,
+        pago: c.pago,
+        parcela: i+1 + "/" + c.parcelas
       });
     }
+  });
 
-    async function togglePago(id, checked) {
-      await db.collection("compras").doc(id).update({ pago: checked });
-    }
-  </script>
+  Object.keys(faturas).sort().forEach(mes => {
+    const comprasMes = faturas[mes];
+    const total = comprasMes.reduce((s,c)=>s+c.valor,0);
+    const pago = comprasMes.filter(c=>c.pago).reduce((s,c)=>s+c.valor,0);
+    const restante = total - pago;
+    const progresso = total>0 ? (pago/total)*100 : 0;
+
+    const card = document.createElement("div");
+    card.className = "fatura-card";
+    card.innerHTML = `
+      <h3>${mes}</h3>
+      <p>Total: R$ ${total.toFixed(2)}</p>
+      <p>Pago: R$ ${pago.toFixed(2)}</p>
+      <p>Restante: R$ ${restante.toFixed(2)}</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:${progresso}%"></div></div>
+    `;
+
+    const ul = document.createElement("ul");
+    comprasMes.forEach((c,i)=>{
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <span>${c.cartao} - ${c.descricao} - R$ ${c.valor.toFixed(2)} (${c.parcela})</span>
+        <input type="checkbox" ${c.pago ? "checked" : ""} data-mes="${mes}" data-index="${i}">
+      `;
+      ul.appendChild(li);
+    });
+    card.appendChild(ul);
+    div.appendChild(card);
+  });
+
+  document.querySelectorAll('.fatura-card input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      const mes = e.target.dataset.mes;
+      const idx = parseInt(e.target.dataset.index);
+      faturas[mes][idx].pago = e.target.checked;
+      // atualizar no array principal
+      const item = compras.find(c=>{
+        const data = new Date(c.data);
+        const mesAno = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
+        return mesAno===mes && c.descricao===faturas[mes][idx].descricao && c.cartao===faturas[mes][idx].cartao;
+      });
+      if(item) item.pago = e.target.checked;
+      salvar();
+      preencherFaturas();
+    });
+  });
+}
+
+window.addEventListener("load", preencherFaturas);
+</script>
+
 </body>
 </html>
