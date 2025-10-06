@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Compras Firestore</title>
+<title>Controle de Compras</title>
 <style>
 :root {
   --cor-primaria: #4a90e2;
@@ -32,109 +32,63 @@ body {
   padding: 20px;
 }
 
-h1, h2 {
-  text-align: center;
-  color: var(--cor-primaria);
-}
+h1,h2 { text-align:center; color: var(--cor-primaria); }
 
-label {
-  display: block;
-  margin-top: var(--espaco);
-  margin-bottom: 4px;
-}
+label { display:block; margin-top: var(--espaco); margin-bottom:4px; }
 
 input, select, button {
-  width: 100%;
-  padding: 10px;
+  width:100%;
+  padding:10px;
   margin-bottom: var(--espaco);
-  border: 1px solid var(--cor-borda);
+  border:1px solid var(--cor-borda);
   border-radius: var(--raio);
-  font-size: 1rem;
+  font-size:1rem;
 }
 
 button {
   background: var(--cor-primaria);
-  color: white;
-  border: none;
-  cursor: pointer;
+  color:white;
+  border:none;
+  cursor:pointer;
   transition: background 0.3s;
 }
 
-button:hover { background: #357abd; }
+button:hover { background:#357abd; }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
+table { width:100%; border-collapse:collapse; margin-top:10px; }
 
-th, td {
-  border: 1px solid var(--cor-borda);
-  padding: 8px;
-  text-align: center;
-}
+th,td { border:1px solid var(--cor-borda); padding:8px; text-align:center; }
 
-th { background: var(--cor-primaria); color: white; }
+th { background: var(--cor-primaria); color:white; }
 
 .futuras {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  margin-top: 15px;
+  display:grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+  margin-top:15px;
+  display:none; /* começa escondido */
 }
 
 .fatura-card {
-  background: #eaf2fd;
-  padding: 12px;
+  background:#eaf2fd;
+  padding:12px;
   border-radius: var(--raio);
-  cursor: pointer;
-  min-height: 160px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  cursor:pointer;
+  min-height:140px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
 }
 
-.fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
-.fatura-card .cartao-detalhe { display: none; margin-top: 5px; }
-.fatura-card .cartao-detalhe p { margin: 2px 0; font-size: 0.85rem; }
+.fatura-card h3 { margin:0 0 5px 0; font-size:1rem; }
+.fatura-card p { margin:2px 0; font-size:0.9rem; }
 
-.progress-bar {
-  width: 100%;
-  height: 10px;
-  border-radius: 5px;
-  background: #e9ecef;
-  margin-top: 5px;
-  overflow: hidden;
-}
+.cartao-detalhe { display:none; margin-top:5px; padding-left:5px; border-left:2px solid #4a90e2; }
 
-.progress-fill {
-  height: 100%;
-  background: #28a745;
-  width: 0%;
-}
+.detalhe-mes { display:none; margin-top:10px; background:#f0f4fb; border-radius: var(--raio); padding:10px; }
 </style>
 </head>
 <body>
-
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
-    authDomain: "controle-contas-86adb.firebaseapp.com",
-    projectId: "controle-contas-86adb",
-    storageBucket: "controle-contas-86adb.appspot.com",
-    messagingSenderId: "349383116773",
-    appId: "1:349383116773:web:c0aa127faf7979bc76510c"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.db = db; // disponibilizar globalmente
-</script>
 
 <div class="container">
   <h1>Nova Compra</h1>
@@ -185,7 +139,6 @@ th { background: var(--cor-primaria); color: white; }
         <th>Cartão</th>
         <th>Parcelas</th>
         <th>Data</th>
-        <th>Pago</th>
       </tr>
     </thead>
     <tbody id="tabelaCompras"></tbody>
@@ -193,89 +146,38 @@ th { background: var(--cor-primaria); color: white; }
 </div>
 
 <div class="container">
-  <h2>Faturas Futuras / Acompanhamento Mensal</h2>
+  <h2>Acompanhamento Mensal</h2>
   <button id="abrirFaturas">Abrir Faturas Futuras</button>
   <div id="futurasFaturas" class="futuras"></div>
+  <div class="detalhe-mes" id="detalheMesDiv"></div>
 </div>
 
 <script type="module">
-import { db } from './'; // Firestore já inicializado acima
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
+  authDomain: "controle-contas-86adb.firebaseapp.com",
+  projectId: "controle-contas-86adb",
+  storageBucket: "controle-contas-86adb.appspot.com",
+  messagingSenderId: "349383116773",
+  appId: "1:349383116773:web:c0aa127faf7979bc76510c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window.db = db; // disponibiliza global
+
 const senhaAcesso = "1234";
 let acessoLiberado = false;
 
-// Função para data atual
-function getDataHoje() {
-  const hoje = new Date();
-  return hoje.toISOString().split('T')[0];
-}
-document.getElementById("data").value = getDataHoje();
-
-// Mostrar/ocultar campo cartão
-const tipoCompraEl = document.getElementById("tipoCompra");
-const campoCartao = document.getElementById("campoCartao");
-tipoCompraEl.addEventListener("change", () => {
-  campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
-});
-
-// Adicionar compra ao Firestore
-document.getElementById("formCompra").addEventListener("submit", async e => {
-  e.preventDefault();
-  const tipo = tipoCompraEl.value;
-  const descricao = document.getElementById("descricao").value;
-  const valor = parseFloat(document.getElementById("valor").value);
-  const parcelas = parseInt(document.getElementById("parcelas").value) || 1;
-  const data = document.getElementById("data").value;
-  const cartao = tipo==="cartao"?document.getElementById("cartao").value:"Fora do cartão";
-
-  if(!descricao || !valor || !data) return alert("Preencha todos os campos!");
-  if(tipo==="cartao" && !cartao) return alert("Escolha um cartão!");
-
-  for(let i=0;i<parcelas;i++){
-    let dataParcela = new Date(data);
-    dataParcela.setMonth(dataParcela.getMonth()+i);
-    await addDoc(collection(db,"compras"),{
-      tipo, descricao, valorParcela: valor/parcelas, parcelas, parcela:i+1,
-      data: dataParcela.toISOString().split('T')[0], cartao, pago:false
-    });
-  }
-  document.getElementById("formCompra").reset();
-  document.getElementById("data").value = getDataHoje();
-  carregarCompras();
-});
-
-// Carregar compras do Firestore
-async function carregarCompras(){
-  const tabela = document.getElementById("tabelaCompras");
-  tabela.innerHTML="";
-  const snapshot = await getDocs(collection(db,"compras"));
-  const compras = [];
-  snapshot.forEach(doc => compras.push({id:doc.id,...doc.data()}));
-
-  compras.sort((a,b)=>new Date(a.data)-new Date(b.data));
-
-  compras.forEach(c=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valorParcela.toFixed(2)}</td>
-                    <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>
-                    <td><input type="checkbox" ${c.pago?"checked":""} onchange="marcarPago('${c.id}',this)"></td>`;
-    tabela.appendChild(tr);
-  });
-  if(acessoLiberado) preencherFaturas();
-}
-
-window.marcarPago = async (id,checkbox)=>{
-  const docRef = doc(db,"compras",id);
-  await updateDoc(docRef,{pago:checkbox.checked});
-  carregarCompras();
-}
-
-// Faturas futuras com detalhamento
 function solicitarSenha() {
   if(!acessoLiberado){
     const tentativa = prompt("Digite a senha para acessar o acompanhamento mensal:");
-    if(tentativa === senhaAcesso){
+    if(tentativa===senhaAcesso){
       acessoLiberado = true;
-      document.getElementById("futurasFaturas").style.display = "grid";
+      document.getElementById("futurasFaturas").style.display="grid";
       preencherFaturas();
     } else alert("Senha incorreta!");
   }
@@ -283,44 +185,104 @@ function solicitarSenha() {
 
 document.getElementById("abrirFaturas").addEventListener("click", solicitarSenha);
 
-async function preencherFaturas(){
-  if(!acessoLiberado) return;
-  const div = document.getElementById("futurasFaturas");
-  div.innerHTML="";
-  const snapshot = await getDocs(collection(db,"compras"));
-  const compras = [];
-  snapshot.forEach(doc => compras.push({id:doc.id,...doc.data()}));
+let compras = JSON.parse(localStorage.getItem('compras')) || [];
 
-  const faturas = {};
+function salvar(){ localStorage.setItem('compras', JSON.stringify(compras)); }
+function getDataHoje(){
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth()+1).padStart(2,'0');
+  const dia = String(hoje.getDate()).padStart(2,'0');
+  return `${ano}-${mes}-${dia}`;
+}
+document.getElementById("data").value=getDataHoje();
+
+const tipoCompraEl=document.getElementById("tipoCompra");
+const campoCartao=document.getElementById("campoCartao");
+tipoCompraEl.addEventListener("change", ()=>{ campoCartao.style.display=tipoCompraEl.value==="cartao"?"block":"none"; });
+
+document.getElementById("formCompra").addEventListener("submit", e=>{
+  e.preventDefault();
+  const tipo=tipoCompraEl.value;
+  const descricao=document.getElementById("descricao").value;
+  const valor=parseFloat(document.getElementById("valor").value);
+  const parcelas=parseInt(document.getElementById("parcelas").value)||1;
+  const data=document.getElementById("data").value;
+  const cartao=tipo==="cartao"?document.getElementById("cartao").value:"Fora do cartão";
+
+  if(!descricao||!valor||!data) return alert("Preencha todos os campos!");
+  if(tipo==="cartao"&&!cartao) return alert("Escolha um cartão!");
+
+  compras.push({tipo,descricao,valor,parcelas,data,cartao,pago:false});
+  salvar();
+  document.getElementById("formCompra").reset();
+  document.getElementById("data").value=getDataHoje();
+  campoCartao.style.display="block";
+  carregarCompras();
+});
+
+function carregarCompras(){
+  const tabela=document.getElementById("tabelaCompras");
+  tabela.innerHTML="";
   compras.forEach(c=>{
-    const mes = c.data.slice(0,7); // YYYY-MM
-    if(!faturas[mes]) faturas[mes]={};
-    if(!faturas[mes][c.cartao]) faturas[mes][c.cartao]=[];
-    faturas[mes][c.cartao].push(c);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
+                  <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>`;
+    tabela.appendChild(tr);
+  });
+}
+
+function preencherFaturas(){
+  if(!acessoLiberado) return;
+  const div=document.getElementById("futurasFaturas");
+  div.innerHTML="";
+  const faturas={};
+
+  compras.forEach(c=>{
+    const data=new Date(c.data);
+    const valorParcela=c.valor/c.parcelas;
+    for(let i=0;i<c.parcelas;i++){
+      let mes=data.getMonth()+1+i;
+      let ano=data.getFullYear();
+      if(mes>12){mes-=12; ano+=1;}
+      const chave=`${ano}-${String(mes).padStart(2,'0')}`;
+      if(!faturas[chave]) faturas[chave]=[];
+      faturas[chave].push({compra:c,parcela:i});
+    }
   });
 
   Object.keys(faturas).sort().forEach(mes=>{
     const card=document.createElement("div");
     card.className="fatura-card";
     card.innerHTML=`<h3>${mes}</h3>`;
-    Object.entries(faturas[mes]).forEach(([cartao,itens])=>{
-      const divCartao = document.createElement("div");
-      divCartao.className="cartao-detalhe";
-      itens.forEach(c=>{
-        divCartao.innerHTML += `<p>${c.descricao} - R$ ${c.valorParcela.toFixed(2)} (${c.parcela}/${c.parcelas}) <input type="checkbox" ${c.pago?"checked":""} onchange="marcarPago('${c.id}',this)"> Pago</p>`;
-      });
-      card.appendChild(divCartao);
-    });
-    card.addEventListener("click", ()=>{
-      const detalhes = card.querySelectorAll(".cartao-detalhe");
-      detalhes.forEach(d=>d.style.display=d.style.display==="block"?"none":"block");
+    faturas[mes].forEach((f,i)=>{
+      card.innerHTML+=`<p>${f.compra.cartao} - ${f.compra.descricao} - R$ ${(f.compra.valor/f.compra.parcelas).toFixed(2)} (${f.compra.parcelas}x)</p>
+      <label><input type="checkbox" ${f.compra.pago?"checked":""} onchange="marcarPago('${mes}',${i},this)"> Pago</label>`;
     });
     div.appendChild(card);
   });
 }
 
+function marcarPago(mes,index,checkbox){
+  const faturas={};
+  compras.forEach(c=>{
+    const data=new Date(c.data);
+    for(let i=0;i<c.parcelas;i++){
+      let m=data.getMonth()+1+i;
+      let a=data.getFullYear();
+      if(m>12){ m-=12; a+=1;}
+      const chave=`${a}-${String(m).padStart(2,'0')}`;
+      if(!faturas[chave]) faturas[chave]=[];
+      faturas[chave].push({compra:c,parcela:i});
+    }
+  });
+  const item=faturas[mes][index];
+  item.compra.pago=checkbox.checked;
+  salvar();
+  preencherFaturas();
+}
+
 window.addEventListener("load", carregarCompras);
 </script>
-
 </body>
 </html>
