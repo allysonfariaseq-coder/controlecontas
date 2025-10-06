@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Compras Offline</title>
+<title>Controle de Compras Firestore</title>
 <style>
 :root {
   --cor-primaria: #4a90e2;
@@ -78,7 +78,7 @@ th { background: var(--cor-primaria); color: white; }
 
 .futuras {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
   margin-top: 15px;
 }
@@ -88,25 +88,15 @@ th { background: var(--cor-primaria); color: white; }
   padding: 12px;
   border-radius: var(--raio);
   cursor: pointer;
-  min-height: 140px;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
 }
 
 .fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
-.fatura-card p { margin: 2px 0; font-size: 0.9rem; }
-
-.detalhe-mes {
-  display: none;
-  margin-top: 10px;
-  background: #f0f4fb;
-  border-radius: var(--raio);
-  padding: 10px;
-}
-
-.detalhe-mes h4 { margin: 0 0 5px 0; font-size: 0.95rem; color: #333; }
-.detalhe-mes p { margin: 2px 0; font-size: 0.85rem; }
+.fatura-card .cartao-detalhe { display: none; margin-top: 5px; }
+.fatura-card .cartao-detalhe p { margin: 2px 0; font-size: 0.85rem; }
 
 .progress-bar {
   width: 100%;
@@ -125,6 +115,26 @@ th { background: var(--cor-primaria); color: white; }
 </style>
 </head>
 <body>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
+    authDomain: "controle-contas-86adb.firebaseapp.com",
+    projectId: "controle-contas-86adb",
+    storageBucket: "controle-contas-86adb.appspot.com",
+    messagingSenderId: "349383116773",
+    appId: "1:349383116773:web:c0aa127faf7979bc76510c"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.db = db; // disponibilizar globalmente
+</script>
 
 <div class="container">
   <h1>Nova Compra</h1>
@@ -175,6 +185,7 @@ th { background: var(--cor-primaria); color: white; }
         <th>Cartão</th>
         <th>Parcelas</th>
         <th>Data</th>
+        <th>Pago</th>
       </tr>
     </thead>
     <tbody id="tabelaCompras"></tbody>
@@ -185,49 +196,29 @@ th { background: var(--cor-primaria); color: white; }
   <h2>Faturas Futuras / Acompanhamento Mensal</h2>
   <button id="abrirFaturas">Abrir Faturas Futuras</button>
   <div id="futurasFaturas" class="futuras"></div>
-  <div class="detalhe-mes" id="detalheMesDiv"></div>
 </div>
 
-<script>
-const senhaAcesso = "1234"; // Defina sua senha aqui
+<script type="module">
+import { db } from './'; // Firestore já inicializado acima
+const senhaAcesso = "1234";
 let acessoLiberado = false;
 
-function solicitarSenha() {
-  if(!acessoLiberado){
-    const tentativa = prompt("Digite a senha para acessar o acompanhamento mensal:");
-    if(tentativa === senhaAcesso){
-      acessoLiberado = true;
-      document.getElementById("futurasFaturas").style.display = "grid";
-      preencherFaturas();
-    } else {
-      alert("Senha incorreta!");
-    }
-  }
-}
-
-document.getElementById("abrirFaturas").addEventListener("click", solicitarSenha);
-
-let compras = JSON.parse(localStorage.getItem('compras')) || [];
-
-function salvar() { localStorage.setItem('compras', JSON.stringify(compras)); }
-
+// Função para data atual
 function getDataHoje() {
   const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth()+1).padStart(2,'0');
-  const dia = String(hoje.getDate()).padStart(2,'0');
-  return `${ano}-${mes}-${dia}`;
+  return hoje.toISOString().split('T')[0];
 }
-
 document.getElementById("data").value = getDataHoje();
 
+// Mostrar/ocultar campo cartão
 const tipoCompraEl = document.getElementById("tipoCompra");
 const campoCartao = document.getElementById("campoCartao");
 tipoCompraEl.addEventListener("change", () => {
   campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
 });
 
-document.getElementById("formCompra").addEventListener("submit", e => {
+// Adicionar compra ao Firestore
+document.getElementById("formCompra").addEventListener("submit", async e => {
   e.preventDefault();
   const tipo = tipoCompraEl.value;
   const descricao = document.getElementById("descricao").value;
@@ -239,76 +230,97 @@ document.getElementById("formCompra").addEventListener("submit", e => {
   if(!descricao || !valor || !data) return alert("Preencha todos os campos!");
   if(tipo==="cartao" && !cartao) return alert("Escolha um cartão!");
 
-  compras.push({tipo, descricao, valor, parcelas, data, cartao, pago:false});
-  salvar();
+  for(let i=0;i<parcelas;i++){
+    let dataParcela = new Date(data);
+    dataParcela.setMonth(dataParcela.getMonth()+i);
+    await addDoc(collection(db,"compras"),{
+      tipo, descricao, valorParcela: valor/parcelas, parcelas, parcela:i+1,
+      data: dataParcela.toISOString().split('T')[0], cartao, pago:false
+    });
+  }
   document.getElementById("formCompra").reset();
   document.getElementById("data").value = getDataHoje();
-  campoCartao.style.display = "block";
   carregarCompras();
 });
 
-function carregarCompras() {
+// Carregar compras do Firestore
+async function carregarCompras(){
   const tabela = document.getElementById("tabelaCompras");
-  tabela.innerHTML = "";
+  tabela.innerHTML="";
+  const snapshot = await getDocs(collection(db,"compras"));
+  const compras = [];
+  snapshot.forEach(doc => compras.push({id:doc.id,...doc.data()}));
+
+  compras.sort((a,b)=>new Date(a.data)-new Date(b.data));
+
   compras.forEach(c=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
-                  <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valorParcela.toFixed(2)}</td>
+                    <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>
+                    <td><input type="checkbox" ${c.pago?"checked":""} onchange="marcarPago('${c.id}',this)"></td>`;
     tabela.appendChild(tr);
   });
+  if(acessoLiberado) preencherFaturas();
 }
 
-function preencherFaturas() {
+window.marcarPago = async (id,checkbox)=>{
+  const docRef = doc(db,"compras",id);
+  await updateDoc(docRef,{pago:checkbox.checked});
+  carregarCompras();
+}
+
+// Faturas futuras com detalhamento
+function solicitarSenha() {
+  if(!acessoLiberado){
+    const tentativa = prompt("Digite a senha para acessar o acompanhamento mensal:");
+    if(tentativa === senhaAcesso){
+      acessoLiberado = true;
+      document.getElementById("futurasFaturas").style.display = "grid";
+      preencherFaturas();
+    } else alert("Senha incorreta!");
+  }
+}
+
+document.getElementById("abrirFaturas").addEventListener("click", solicitarSenha);
+
+async function preencherFaturas(){
   if(!acessoLiberado) return;
   const div = document.getElementById("futurasFaturas");
   div.innerHTML="";
-  const faturas={};
+  const snapshot = await getDocs(collection(db,"compras"));
+  const compras = [];
+  snapshot.forEach(doc => compras.push({id:doc.id,...doc.data()}));
 
+  const faturas = {};
   compras.forEach(c=>{
-    const data = new Date(c.data);
-    const valorParcela = c.valor/c.parcelas;
-    for(let i=0;i<c.parcelas;i++){
-      let mes = data.getMonth()+1+i;
-      let ano = data.getFullYear();
-      if(mes>12){mes-=12; ano+=1;}
-      const chave=`${ano}-${String(mes).padStart(2,'0')}`;
-      if(!faturas[chave]) faturas[chave]=[];
-      faturas[chave].push({compra:c,parcela:i});
-    }
+    const mes = c.data.slice(0,7); // YYYY-MM
+    if(!faturas[mes]) faturas[mes]={};
+    if(!faturas[mes][c.cartao]) faturas[mes][c.cartao]=[];
+    faturas[mes][c.cartao].push(c);
   });
 
   Object.keys(faturas).sort().forEach(mes=>{
     const card=document.createElement("div");
     card.className="fatura-card";
     card.innerHTML=`<h3>${mes}</h3>`;
-    faturas[mes].forEach((f,i)=>{
-      card.innerHTML+=`<p>${f.compra.cartao} - ${f.compra.descricao} - R$ ${(f.compra.valor/f.compra.parcelas).toFixed(2)} (${f.compra.parcelas}x)</p>
-                        <label><input type="checkbox" ${f.compra.pago?"checked":""} onchange="marcarPago('${mes}',${i},this)"> Pago</label>`;
+    Object.entries(faturas[mes]).forEach(([cartao,itens])=>{
+      const divCartao = document.createElement("div");
+      divCartao.className="cartao-detalhe";
+      itens.forEach(c=>{
+        divCartao.innerHTML += `<p>${c.descricao} - R$ ${c.valorParcela.toFixed(2)} (${c.parcela}/${c.parcelas}) <input type="checkbox" ${c.pago?"checked":""} onchange="marcarPago('${c.id}',this)"> Pago</p>`;
+      });
+      card.appendChild(divCartao);
+    });
+    card.addEventListener("click", ()=>{
+      const detalhes = card.querySelectorAll(".cartao-detalhe");
+      detalhes.forEach(d=>d.style.display=d.style.display==="block"?"none":"block");
     });
     div.appendChild(card);
   });
 }
 
-function marcarPago(mes,index,checkbox){
-  const faturas={};
-  compras.forEach(c=>{
-    const data=new Date(c.data);
-    for(let i=0;i<c.parcelas;i++){
-      let m=data.getMonth()+1+i;
-      let a=data.getFullYear();
-      if(m>12){ m-=12; a+=1;}
-      const chave=`${a}-${String(m).padStart(2,'0')}`;
-      if(!faturas[chave]) faturas[chave]=[];
-      faturas[chave].push({compra:c,parcela:i});
-    }
-  });
-  const item=faturas[mes][index];
-  item.compra.pago=checkbox.checked;
-  salvar();
-  preencherFaturas();
-}
-
 window.addEventListener("load", carregarCompras);
 </script>
+
 </body>
 </html>
