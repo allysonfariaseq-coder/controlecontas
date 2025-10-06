@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Compras</title>
+<title>Controle de Compras Offline</title>
 <style>
 :root {
   --cor-primaria: #4a90e2;
@@ -161,116 +161,86 @@ th { background: var(--cor-primaria); color: white; }
 
 <div class="container">
   <h2>Faturas Futuras</h2>
-  <button id="acessarFaturas">Acessar Faturas</button>
-  <div class="futuras" id="futurasFaturas" style="display:none;"></div>
+  <div class="futuras" id="futurasFaturas"></div>
   <div class="detalhe-mes" id="detalheMesDiv"></div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script>
+// Função para pegar data de hoje no formato YYYY-MM-DD
+function getDataHoje() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyBjwDPCfffi92Z0Qu-12zY_ZMUxySQDFNM",
-  authDomain: "controle-contas-86adb.firebaseapp.com",
-  projectId: "controle-contas-86adb",
-  storageBucket: "controle-contas-86adb.appspot.com",
-  messagingSenderId: "349383116773",
-  appId: "1:349383116773:web:c0aa127faf7979bc76510c"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const form = document.getElementById("formCompra");
-const tabela = document.getElementById("tabelaCompras");
-const futurasDiv = document.getElementById("futurasFaturas");
-const detalheMesDiv = document.getElementById("detalheMesDiv");
-const tipoCompraEl = document.getElementById("tipoCompra");
-const campoCartao = document.getElementById("campoCartao");
-const cartaoEl = document.getElementById("cartao");
-const btnAcessar = document.getElementById("acessarFaturas");
-
-// Senha (para uso pessoal)
-const senhaCorreta = "1234"; // altere para a senha que desejar
-let acessoLiberado = false;
+// Inicializar campo de data
+document.getElementById("data").value = getDataHoje();
 
 // Mostrar/ocultar campo cartão
+const tipoCompraEl = document.getElementById("tipoCompra");
+const campoCartao = document.getElementById("campoCartao");
 tipoCompraEl.addEventListener("change", () => {
   campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
 });
 
+// LocalStorage para salvar compras offline
+let compras = JSON.parse(localStorage.getItem("compras")) || [];
+
 // Adicionar compra
-form.addEventListener("submit", async e => {
+document.getElementById("formCompra").addEventListener("submit", e => {
   e.preventDefault();
   const tipo = tipoCompraEl.value;
   const descricao = document.getElementById("descricao").value;
   const valor = parseFloat(document.getElementById("valor").value);
   const parcelas = parseInt(document.getElementById("parcelas").value) || 1;
   const data = document.getElementById("data").value;
-  const cartao = tipo === "cartao" ? cartaoEl.value : "Fora do cartão";
+  const cartao = tipo === "cartao" ? document.getElementById("cartao").value : "Fora do cartão";
 
-  if (!descricao || !valor || !data) return alert("Preencha todos os campos!");
-  if (tipo === "cartao" && !cartao) return alert("Escolha um cartão!");
+  if(!descricao || !valor || !data) return alert("Preencha todos os campos!");
+  if(tipo === "cartao" && !cartao) return alert("Escolha um cartão!");
 
-  await addDoc(collection(db,"compras"),{
-    tipo,
-    descricao,
-    valor,
-    parcelas,
-    data,
-    cartao
-  });
-
+  compras.push({ tipo, descricao, valor, parcelas, data, cartao });
+  localStorage.setItem("compras", JSON.stringify(compras));
   form.reset();
   campoCartao.style.display = "block";
   carregarCompras();
 });
 
-// Função faturas futuras
-function gerarFaturasFuturas(compras) {
-  const faturas = {};
-  compras.forEach(c => {
-    const data = new Date(c.data);
-    const valorParcela = c.valor / c.parcelas;
-    for (let i = 0; i < c.parcelas; i++) {
-      let mes = data.getMonth() + 1 + i;
-      let ano = data.getFullYear();
-      if (mes > 12) { mes -= 12; ano += 1; }
-      const mesChave = `${ano}-${String(mes).padStart(2,'0')}`;
-      if (!faturas[mesChave]) faturas[mesChave] = {};
-      if (!faturas[mesChave][c.cartao]) faturas[mesChave][c.cartao] = 0;
-      faturas[mesChave][c.cartao] += valorParcela;
-    }
-  });
-  return faturas;
-}
-
-// Preencher compras
-async function carregarCompras() {
+// Carregar compras na tabela
+function carregarCompras() {
+  const tabela = document.getElementById("tabelaCompras");
   tabela.innerHTML = "";
-  futurasDiv.style.display = acessoLiberado ? "grid" : "none";
-  detalheMesDiv.style.display = "none";
-
-  const q = query(collection(db,"compras"), orderBy("data"));
-  const snap = await getDocs(q);
-  const compras = [];
-  snap.forEach(doc => compras.push(doc.data()));
-
-  // Preencher tabela de compras
   compras.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
                     <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>`;
     tabela.appendChild(tr);
   });
+  preencherFaturas();
+}
 
-  if (!acessoLiberado) return;
-
-  // Preencher faturas futuras
-  const faturas = gerarFaturasFuturas(compras);
+// Gerar faturas futuras com parcelas
+function preencherFaturas() {
+  const futurasDiv = document.getElementById("futurasFaturas");
   futurasDiv.innerHTML = "";
+  const faturas = {};
+
+  compras.forEach(c => {
+    const data = new Date(c.data);
+    const valorParcela = c.valor / c.parcelas;
+    for(let i=0;i<c.parcelas;i++){
+      let mes = data.getMonth() + 1 + i;
+      let ano = data.getFullYear();
+      if(mes>12){ mes-=12; ano+=1; }
+      const mesChave = `${ano}-${String(mes).padStart(2,'0')}`;
+      if(!faturas[mesChave]) faturas[mesChave] = {};
+      if(!faturas[mesChave][c.cartao]) faturas[mesChave][c.cartao] = 0;
+      faturas[mesChave][c.cartao] += valorParcela;
+    }
+  });
+
   Object.keys(faturas).sort().forEach(mes => {
     const divCard = document.createElement("div");
     divCard.className = "fatura-card";
@@ -278,50 +248,35 @@ async function carregarCompras() {
     Object.entries(faturas[mes]).forEach(([cartao, valor]) => {
       divCard.innerHTML += `<p>${cartao}: R$ ${valor.toFixed(2)}</p>`;
     });
-    divCard.addEventListener("click", () => detalharMes(mes, compras));
+    divCard.addEventListener("click", ()=> detalharMes(mes));
     futurasDiv.appendChild(divCard);
   });
 }
 
 // Detalhar mês
-function detalharMes(mes, compras) {
-  detalheMesDiv.innerHTML = `<h4>Detalhes do mês: ${mes}</h4>`;
+function detalharMes(mes) {
+  const detalheDiv = document.getElementById("detalheMesDiv");
+  detalheDiv.innerHTML = `<h4>Detalhes do mês: ${mes}</h4>`;
   compras.filter(c => {
     const data = new Date(c.data);
-    let mesCompra = data.getMonth() + 1;
+    let mesCompra = data.getMonth()+1;
     let anoCompra = data.getFullYear();
     for(let i=0;i<c.parcelas;i++){
-      let mesFatura = mesCompra + i;
+      let mesFatura = mesCompra+i;
       let anoFatura = anoCompra;
       if(mesFatura>12){ mesFatura-=12; anoFatura+=1; }
       const mesChave = `${anoFatura}-${String(mesFatura).padStart(2,'0')}`;
-      if(mesChave === mes) return true;
+      if(mesChave===mes) return true;
     }
     return false;
-  }).forEach(c => {
+  }).forEach(c=>{
     const valorParcela = c.valor / c.parcelas;
-    detalheMesDiv.innerHTML += `<p>${c.cartao} - ${c.descricao} - R$ ${valorParcela.toFixed(2)} (${c.parcelas}x)</p>`;
+    detalheDiv.innerHTML += `<p>${c.cartao} - ${c.descricao} - R$ ${valorParcela.toFixed(2)} (${c.parcelas}x)</p>`;
   });
-  detalheMesDiv.style.display = "block";
+  detalheDiv.style.display = "block";
 }
-
-// Botão acessar faturas com senha
-btnAcessar.addEventListener("click", () => {
-  if(acessoLiberado){
-    futurasDiv.style.display = "grid";
-    return;
-  }
-  const senha = prompt("Digite a senha para acessar as faturas:");
-  if(senha === senhaCorreta){
-    acessoLiberado = true;
-    carregarCompras();
-  } else {
-    alert("Senha incorreta!");
-  }
-});
 
 window.addEventListener("load", carregarCompras);
 </script>
-
 </body>
 </html>
