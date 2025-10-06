@@ -78,7 +78,7 @@ th { background: var(--cor-primaria); color: white; }
 
 .futuras {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
   margin-top: 15px;
 }
@@ -88,15 +88,14 @@ th { background: var(--cor-primaria); color: white; }
   padding: 12px;
   border-radius: var(--raio);
   cursor: pointer;
-  min-height: 160px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
 }
 
 .fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
-.fatura-card .cartao-detalhe { display: none; margin-top: 5px; }
-.fatura-card .cartao-detalhe p { margin: 2px 0; font-size: 0.85rem; }
+.fatura-card p { margin: 2px 0; font-size: 0.9rem; }
 
 .detalhe-mes {
   display: none;
@@ -186,10 +185,11 @@ th { background: var(--cor-primaria); color: white; }
   <h2>Faturas Futuras / Acompanhamento Mensal</h2>
   <button id="abrirFaturas">Abrir Faturas Futuras</button>
   <div id="futurasFaturas" class="futuras"></div>
+  <div class="detalhe-mes" id="detalheMesDiv"></div>
 </div>
 
 <script>
-const senhaAcesso = "1234";
+const senhaAcesso = "1234"; // Defina sua senha aqui
 let acessoLiberado = false;
 
 function solicitarSenha() {
@@ -213,7 +213,10 @@ function salvar() { localStorage.setItem('compras', JSON.stringify(compras)); }
 
 function getDataHoje() {
   const hoje = new Date();
-  return hoje.toISOString().split('T')[0];
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth()+1).padStart(2,'0');
+  const dia = String(hoje.getDate()).padStart(2,'0');
+  return `${ano}-${mes}-${dia}`;
 }
 
 document.getElementById("data").value = getDataHoje();
@@ -246,7 +249,7 @@ document.getElementById("formCompra").addEventListener("submit", e => {
 
 function carregarCompras() {
   const tabela = document.getElementById("tabelaCompras");
-  tabela.innerHTML="";
+  tabela.innerHTML = "";
   compras.forEach(c=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
@@ -269,9 +272,8 @@ function preencherFaturas() {
       let ano = data.getFullYear();
       if(mes>12){mes-=12; ano+=1;}
       const chave=`${ano}-${String(mes).padStart(2,'0')}`;
-      if(!faturas[chave]) faturas[chave]={};
-      if(!faturas[chave][c.cartao]) faturas[chave][c.cartao]=[];
-      faturas[chave][c.cartao].push({...c, parcela:i+1, valorParcela});
+      if(!faturas[chave]) faturas[chave]=[];
+      faturas[chave].push({compra:c,parcela:i});
     }
   });
 
@@ -279,36 +281,29 @@ function preencherFaturas() {
     const card=document.createElement("div");
     card.className="fatura-card";
     card.innerHTML=`<h3>${mes}</h3>`;
-    
-    // criar lista por cartão
-    Object.keys(faturas[mes]).forEach(cartao=>{
-      const cartaoDiv=document.createElement("div");
-      cartaoDiv.className="cartao-detalhe";
-      cartaoDiv.innerHTML=`<strong>${cartao}</strong>`;
-      faturas[mes][cartao].forEach(c=>{
-        const p = document.createElement("p");
-        p.innerHTML=`${c.descricao} - R$ ${c.valorParcela.toFixed(2)} (${c.parcela}/${c.parcelas}) 
-                     <label><input type="checkbox" ${c.pago?"checked":""} onchange="marcarPago('${c.data}','${c.descricao}','${c.cartao}',this)"> Pago</label>`;
-        cartaoDiv.appendChild(p);
-      });
-      card.appendChild(cartaoDiv);
+    faturas[mes].forEach((f,i)=>{
+      card.innerHTML+=`<p>${f.compra.cartao} - ${f.compra.descricao} - R$ ${(f.compra.valor/f.compra.parcelas).toFixed(2)} (${f.compra.parcelas}x)</p>
+                        <label><input type="checkbox" ${f.compra.pago?"checked":""} onchange="marcarPago('${mes}',${i},this)"> Pago</label>`;
     });
-
-    card.addEventListener("click", ()=>{
-      const detalhes = card.querySelectorAll(".cartao-detalhe");
-      detalhes.forEach(d=>d.style.display=d.style.display==="block"?"none":"block");
-    });
-
     div.appendChild(card);
   });
 }
 
-function marcarPago(data,descricao,cartao,checkbox){
+function marcarPago(mes,index,checkbox){
+  const faturas={};
   compras.forEach(c=>{
-    if(c.data===data && c.descricao===descricao && c.cartao===cartao){
-      c.pago = checkbox.checked;
+    const data=new Date(c.data);
+    for(let i=0;i<c.parcelas;i++){
+      let m=data.getMonth()+1+i;
+      let a=data.getFullYear();
+      if(m>12){ m-=12; a+=1;}
+      const chave=`${a}-${String(m).padStart(2,'0')}`;
+      if(!faturas[chave]) faturas[chave]=[];
+      faturas[chave].push({compra:c,parcela:i});
     }
   });
+  const item=faturas[mes][index];
+  item.compra.pago=checkbox.checked;
   salvar();
   preencherFaturas();
 }
