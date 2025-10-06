@@ -5,104 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Compras</title>
 <style>
-  :root {
-    --cor-primaria: #4a90e2;
-    --cor-secundaria: #f5f7fa;
-    --cor-borda: #ccc;
-    --cor-texto: #333;
-    --raio: 8px;
-    --espaco: 12px;
-  }
+:root {
+  --cor-primaria: #4a90e2;
+  --cor-secundaria: #f5f7fa;
+  --cor-borda: #ccc;
+  --cor-texto: #333;
+  --raio: 8px;
+  --espaco: 12px;
+}
 
-  body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    margin: 0;
-    padding: 20px;
-    background: var(--cor-secundaria);
-    color: var(--cor-texto);
-  }
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  margin: 0;
+  padding: 20px;
+  background: var(--cor-secundaria);
+  color: var(--cor-texto);
+}
 
-  .container {
-    background: white;
-    border-radius: var(--raio);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    width: 90%;
-    max-width: 600px;
-    margin: 0 auto 20px auto;
-    padding: 20px;
-  }
+.container {
+  background: white;
+  border-radius: var(--raio);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  width: 90%;
+  max-width: 600px;
+  margin: 0 auto 20px auto;
+  padding: 20px;
+}
 
-  h1, h2 {
-    text-align: center;
-    color: var(--cor-primaria);
-  }
+h1, h2 {
+  text-align: center;
+  color: var(--cor-primaria);
+}
 
-  label {
-    display: block;
-    margin-top: var(--espaco);
-    margin-bottom: 4px;
-  }
+label {
+  display: block;
+  margin-top: var(--espaco);
+  margin-bottom: 4px;
+}
 
-  input, select, button {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: var(--espaco);
-    border: 1px solid var(--cor-borda);
-    border-radius: var(--raio);
-    font-size: 1rem;
-  }
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: var(--espaco);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  font-size: 1rem;
+}
 
-  button {
-    background: var(--cor-primaria);
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
+button {
+  background: var(--cor-primaria);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
 
-  button:hover { background: #357abd; }
+button:hover { background: #357abd; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
 
-  th, td {
-    border: 1px solid var(--cor-borda);
-    padding: 8px;
-    text-align: center;
-  }
+th, td {
+  border: 1px solid var(--cor-borda);
+  padding: 8px;
+  text-align: center;
+}
 
-  th { background: var(--cor-primaria); color: white; }
+th { background: var(--cor-primaria); color: white; }
 
-  .futuras {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 10px;
-    margin-top: 15px;
-  }
+.futuras {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
 
-  .fatura-card {
-    background: #eaf2fd;
-    padding: 12px;
-    border-radius: var(--raio);
-    cursor: pointer;
-  }
+.fatura-card {
+  background: #eaf2fd;
+  padding: 12px;
+  border-radius: var(--raio);
+  cursor: pointer;
+}
 
-  .fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
-  .fatura-card p { margin: 2px 0; font-size: 0.9rem; }
+.fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
+.fatura-card p { margin: 2px 0; font-size: 0.9rem; }
 
-  .detalhe-mes {
-    display: none;
-    margin-top: 10px;
-    background: #f0f4fb;
-    border-radius: var(--raio);
-    padding: 10px;
-  }
+.detalhe-mes {
+  display: none;
+  margin-top: 10px;
+  background: #f0f4fb;
+  border-radius: var(--raio);
+  padding: 10px;
+}
 
-  .detalhe-mes h4 { margin: 0 0 5px 0; font-size: 0.95rem; color: #333; }
-  .detalhe-mes p { margin: 2px 0; font-size: 0.85rem; }
+.detalhe-mes h4 { margin: 0 0 5px 0; font-size: 0.95rem; color: #333; }
+.detalhe-mes p { margin: 2px 0; font-size: 0.85rem; }
 </style>
 </head>
 <body>
@@ -161,7 +161,8 @@
 
 <div class="container">
   <h2>Faturas Futuras</h2>
-  <div class="futuras" id="futurasFaturas"></div>
+  <button id="acessarFaturas">Acessar Faturas</button>
+  <div class="futuras" id="futurasFaturas" style="display:none;"></div>
   <div class="detalhe-mes" id="detalheMesDiv"></div>
 </div>
 
@@ -189,6 +190,11 @@ const detalheMesDiv = document.getElementById("detalheMesDiv");
 const tipoCompraEl = document.getElementById("tipoCompra");
 const campoCartao = document.getElementById("campoCartao");
 const cartaoEl = document.getElementById("cartao");
+const btnAcessar = document.getElementById("acessarFaturas");
+
+// Senha (para uso pessoal)
+const senhaCorreta = "1234"; // altere para a senha que desejar
+let acessoLiberado = false;
 
 // Mostrar/ocultar campo cartão
 tipoCompraEl.addEventListener("change", () => {
@@ -222,11 +228,30 @@ form.addEventListener("submit", async e => {
   carregarCompras();
 });
 
-// Carregar compras e faturas
+// Função faturas futuras
+function gerarFaturasFuturas(compras) {
+  const faturas = {};
+  compras.forEach(c => {
+    const data = new Date(c.data);
+    const valorParcela = c.valor / c.parcelas;
+    for (let i = 0; i < c.parcelas; i++) {
+      let mes = data.getMonth() + 1 + i;
+      let ano = data.getFullYear();
+      if (mes > 12) { mes -= 12; ano += 1; }
+      const mesChave = `${ano}-${String(mes).padStart(2,'0')}`;
+      if (!faturas[mesChave]) faturas[mesChave] = {};
+      if (!faturas[mesChave][c.cartao]) faturas[mesChave][c.cartao] = 0;
+      faturas[mesChave][c.cartao] += valorParcela;
+    }
+  });
+  return faturas;
+}
+
+// Preencher compras
 async function carregarCompras() {
   tabela.innerHTML = "";
-  futurasDiv.innerHTML = "";
-  detalheMesDiv.innerHTML = "";
+  futurasDiv.style.display = acessoLiberado ? "grid" : "none";
+  detalheMesDiv.style.display = "none";
 
   const q = query(collection(db,"compras"), orderBy("data"));
   const snap = await getDocs(q);
@@ -236,27 +261,16 @@ async function carregarCompras() {
   // Preencher tabela de compras
   compras.forEach(c => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${c.tipo}</td>
-      <td>${c.descricao}</td>
-      <td>R$ ${c.valor.toFixed(2)}</td>
-      <td>${c.cartao}</td>
-      <td>${c.parcelas}</td>
-      <td>${c.data}</td>
-    `;
+    tr.innerHTML = `<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
+                    <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>`;
     tabela.appendChild(tr);
   });
 
-  // Agrupar faturas futuras
-  const faturas = {};
-  compras.forEach(c => {
-    const mes = c.data.substring(0,7);
-    if (!faturas[mes]) faturas[mes] = {};
-    if (!faturas[mes][c.cartao]) faturas[mes][c.cartao] = 0;
-    faturas[mes][c.cartao] += c.valor / c.parcelas;
-  });
+  if (!acessoLiberado) return;
 
-  // Ordenar meses e criar cards
+  // Preencher faturas futuras
+  const faturas = gerarFaturasFuturas(compras);
+  futurasDiv.innerHTML = "";
   Object.keys(faturas).sort().forEach(mes => {
     const divCard = document.createElement("div");
     divCard.className = "fatura-card";
@@ -272,14 +286,42 @@ async function carregarCompras() {
 // Detalhar mês
 function detalharMes(mes, compras) {
   detalheMesDiv.innerHTML = `<h4>Detalhes do mês: ${mes}</h4>`;
-  compras.filter(c => c.data.startsWith(mes)).forEach(c => {
+  compras.filter(c => {
+    const data = new Date(c.data);
+    let mesCompra = data.getMonth() + 1;
+    let anoCompra = data.getFullYear();
+    for(let i=0;i<c.parcelas;i++){
+      let mesFatura = mesCompra + i;
+      let anoFatura = anoCompra;
+      if(mesFatura>12){ mesFatura-=12; anoFatura+=1; }
+      const mesChave = `${anoFatura}-${String(mesFatura).padStart(2,'0')}`;
+      if(mesChave === mes) return true;
+    }
+    return false;
+  }).forEach(c => {
     const valorParcela = c.valor / c.parcelas;
     detalheMesDiv.innerHTML += `<p>${c.cartao} - ${c.descricao} - R$ ${valorParcela.toFixed(2)} (${c.parcelas}x)</p>`;
   });
   detalheMesDiv.style.display = "block";
 }
 
+// Botão acessar faturas com senha
+btnAcessar.addEventListener("click", () => {
+  if(acessoLiberado){
+    futurasDiv.style.display = "grid";
+    return;
+  }
+  const senha = prompt("Digite a senha para acessar as faturas:");
+  if(senha === senhaCorreta){
+    acessoLiberado = true;
+    carregarCompras();
+  } else {
+    alert("Senha incorreta!");
+  }
+});
+
 window.addEventListener("load", carregarCompras);
 </script>
+
 </body>
 </html>
