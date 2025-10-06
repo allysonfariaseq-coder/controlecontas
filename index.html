@@ -1,282 +1,323 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Compras Offline</title>
-<style>
-:root {
-  --cor-primaria: #4a90e2;
-  --cor-secundaria: #f5f7fa;
-  --cor-borda: #ccc;
-  --cor-texto: #333;
-  --raio: 8px;
-  --espaco: 12px;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Compras & Faturas</title>
+  <style>
+    :root {
+      --cor-primaria: #4a90e2;
+      --cor-secundaria: #f5f7fa;
+      --cor-borda: #ccc;
+      --cor-texto: #333;
+      --raio: 8px;
+      --espaco: 12px;
+    }
 
-body {
-  font-family: 'Segoe UI', Tahoma, sans-serif;
-  margin: 0;
-  padding: 20px;
-  background: var(--cor-secundaria);
-  color: var(--cor-texto);
-}
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: var(--cor-secundaria);
+      color: var(--cor-texto);
+    }
 
-.container {
-  background: white;
-  border-radius: var(--raio);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  width: 90%;
-  max-width: 600px;
-  margin: 0 auto 20px auto;
-  padding: 20px;
-}
+    .container {
+      background: white;
+      border-radius: var(--raio);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
 
-h1, h2 {
-  text-align: center;
-  color: var(--cor-primaria);
-}
+    h1, h2 {
+      text-align: center;
+      color: var(--cor-primaria);
+    }
 
-label {
-  display: block;
-  margin-top: var(--espaco);
-  margin-bottom: 4px;
-}
+    label {
+      display: block;
+      margin-top: var(--espaco);
+      margin-bottom: 4px;
+    }
 
-input, select, button {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: var(--espaco);
-  border: 1px solid var(--cor-borda);
-  border-radius: var(--raio);
-  font-size: 1rem;
-}
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: var(--espaco);
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio);
+      font-size: 0.95rem;
+    }
 
-button {
-  background: var(--cor-primaria);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s;
-}
+    button {
+      background: var(--cor-primaria);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
 
-button:hover { background: #357abd; }
+    button:hover {
+      background: #357abd;
+    }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
 
-th, td {
-  border: 1px solid var(--cor-borda);
-  padding: 8px;
-  text-align: center;
-}
+    th, td {
+      border: 1px solid var(--cor-borda);
+      padding: 6px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
 
-th { background: var(--cor-primaria); color: white; }
+    th {
+      background: var(--cor-primaria);
+      color: white;
+    }
 
-.futuras {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px;
-  margin-top: 15px;
-}
+    .status-pago {
+      color: green;
+      font-weight: bold;
+    }
 
-.fatura-card {
-  background: #eaf2fd;
-  padding: 12px;
-  border-radius: var(--raio);
-  cursor: pointer;
-}
+    .status-pendente {
+      color: orange;
+      font-weight: bold;
+    }
 
-.fatura-card h3 { margin: 0 0 5px 0; font-size: 1rem; }
-.fatura-card p { margin: 2px 0; font-size: 0.9rem; }
+    .status-vencido {
+      color: red;
+      font-weight: bold;
+    }
 
-.detalhe-mes {
-  display: none;
-  margin-top: 10px;
-  background: #f0f4fb;
-  border-radius: var(--raio);
-  padding: 10px;
-}
+    .resumo-mensal {
+      margin-top: 20px;
+      background: #f0f4fb;
+      padding: 12px;
+      border-radius: var(--raio);
+    }
 
-.detalhe-mes h4 { margin: 0 0 5px 0; font-size: 0.95rem; color: #333; }
-.detalhe-mes p { margin: 2px 0; font-size: 0.85rem; }
-</style>
+    .filtros {
+      margin-top: 10px;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>Nova Compra</h1>
-  <form id="formCompra">
-    <label>Tipo de compra</label>
-    <select id="tipoCompra">
+  <div class="container">
+    <h1>Controle de Compras</h1>
+
+    <!-- Formulário -->
+    <label for="valor">Valor da compra</label>
+    <input type="number" id="valor" placeholder="Ex: 120.50" step="0.01" min="0.01">
+
+    <label for="tipoConta">Tipo de conta</label>
+    <select id="tipoConta" onchange="toggleCartao()">
+      <option value="">Selecione</option>
       <option value="cartao">Cartão de crédito</option>
       <option value="fora">Fora do cartão</option>
     </select>
 
-    <label>Descrição</label>
-    <input type="text" id="descricao" placeholder="Ex: supermercado">
-
-    <label>Valor</label>
-    <input type="number" id="valor" step="0.01" min="0.01">
-
-    <div id="campoCartao">
-      <label>Cartão</label>
+    <div id="campoCartao" style="display:none;">
+      <label for="cartao">Cartão</label>
       <select id="cartao">
         <option value="">Selecione o cartão</option>
         <option value="Nubank">Nubank</option>
         <option value="Inter">Inter</option>
         <option value="Itaú">Itaú</option>
+        <option value="Santander">Santander</option>
       </select>
     </div>
 
-    <label>Parcelas</label>
-    <input type="number" id="parcelas" value="1" min="1">
+    <label for="parcelas">Parcelas</label>
+    <input type="number" id="parcelas" min="1" value="1">
 
-    <label>Data</label>
+    <label for="data">Data da compra</label>
     <input type="date" id="data">
 
-    <button type="submit">Adicionar Compra</button>
-  </form>
-</div>
+    <label for="descricao">Descrição</label>
+    <input type="text" id="descricao" placeholder="Ex: Supermercado">
 
-<div class="container">
-  <h2>Compras</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Tipo</th>
-        <th>Descrição</th>
-        <th>Valor Total</th>
-        <th>Cartão</th>
-        <th>Parcelas</th>
-        <th>Data</th>
-      </tr>
-    </thead>
-    <tbody id="tabelaCompras"></tbody>
-  </table>
-</div>
+    <label for="status">Status</label>
+    <select id="status">
+      <option value="pendente">Pendente</option>
+      <option value="pago">Pago</option>
+    </select>
 
-<div class="container">
-  <h2>Faturas Futuras</h2>
-  <div class="futuras" id="futurasFaturas"></div>
-  <div class="detalhe-mes" id="detalheMesDiv"></div>
-</div>
+    <button onclick="adicionarCompra()">Adicionar</button>
+
+    <!-- Filtro -->
+    <div class="filtros">
+      <label for="filtroStatus">Filtrar: </label>
+      <select id="filtroStatus" onchange="preencherTabela()">
+        <option value="todos">Todos</option>
+        <option value="pago">Pagos</option>
+        <option value="pendente">Pendentes</option>
+      </select>
+    </div>
+
+    <!-- Tabela -->
+    <table id="tabelaCompras">
+      <thead>
+        <tr>
+          <th>Valor</th>
+          <th>Tipo</th>
+          <th>Cartão</th>
+          <th>Data</th>
+          <th>Descrição</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Resumo Mensal -->
+    <div class="resumo-mensal" id="resumoMensal"></div>
+  </div>
 
 <script>
-// Função para pegar data de hoje no formato YYYY-MM-DD
-function getDataHoje() {
-  const hoje = new Date();
-  const ano = hoje.getFullYear();
-  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-  const dia = String(hoje.getDate()).padStart(2, '0');
-  return `${ano}-${mes}-${dia}`;
-}
+  let compras = JSON.parse(localStorage.getItem('compras')) || [];
 
-// Inicializar campo de data
-document.getElementById("data").value = getDataHoje();
+  function salvar() {
+    localStorage.setItem('compras', JSON.stringify(compras));
+  }
 
-// Mostrar/ocultar campo cartão
-const tipoCompraEl = document.getElementById("tipoCompra");
-const campoCartao = document.getElementById("campoCartao");
-tipoCompraEl.addEventListener("change", () => {
-  campoCartao.style.display = tipoCompraEl.value === "cartao" ? "block" : "none";
-});
+  function getDataHoje() {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
 
-// LocalStorage para salvar compras offline
-let compras = JSON.parse(localStorage.getItem("compras")) || [];
-
-// Adicionar compra
-document.getElementById("formCompra").addEventListener("submit", e => {
-  e.preventDefault();
-  const tipo = tipoCompraEl.value;
-  const descricao = document.getElementById("descricao").value;
-  const valor = parseFloat(document.getElementById("valor").value);
-  const parcelas = parseInt(document.getElementById("parcelas").value) || 1;
-  const data = document.getElementById("data").value;
-  const cartao = tipo === "cartao" ? document.getElementById("cartao").value : "Fora do cartão";
-
-  if(!descricao || !valor || !data) return alert("Preencha todos os campos!");
-  if(tipo === "cartao" && !cartao) return alert("Escolha um cartão!");
-
-  compras.push({ tipo, descricao, valor, parcelas, data, cartao });
-  localStorage.setItem("compras", JSON.stringify(compras));
-  form.reset();
-  campoCartao.style.display = "block";
-  carregarCompras();
-});
-
-// Carregar compras na tabela
-function carregarCompras() {
-  const tabela = document.getElementById("tabelaCompras");
-  tabela.innerHTML = "";
-  compras.forEach(c => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${c.tipo}</td><td>${c.descricao}</td><td>R$ ${c.valor.toFixed(2)}</td>
-                    <td>${c.cartao}</td><td>${c.parcelas}</td><td>${c.data}</td>`;
-    tabela.appendChild(tr);
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("data").value = getDataHoje();
+    preencherTabela();
   });
-  preencherFaturas();
-}
 
-// Gerar faturas futuras com parcelas
-function preencherFaturas() {
-  const futurasDiv = document.getElementById("futurasFaturas");
-  futurasDiv.innerHTML = "";
-  const faturas = {};
+  function toggleCartao() {
+    const tipo = document.getElementById("tipoConta").value;
+    document.getElementById("campoCartao").style.display = (tipo === "cartao") ? "block" : "none";
+  }
 
-  compras.forEach(c => {
-    const data = new Date(c.data);
-    const valorParcela = c.valor / c.parcelas;
-    for(let i=0;i<c.parcelas;i++){
-      let mes = data.getMonth() + 1 + i;
-      let ano = data.getFullYear();
-      if(mes>12){ mes-=12; ano+=1; }
-      const mesChave = `${ano}-${String(mes).padStart(2,'0')}`;
-      if(!faturas[mesChave]) faturas[mesChave] = {};
-      if(!faturas[mesChave][c.cartao]) faturas[mesChave][c.cartao] = 0;
-      faturas[mesChave][c.cartao] += valorParcela;
+  function adicionarCompra() {
+    const valor = parseFloat(document.getElementById("valor").value);
+    const tipoConta = document.getElementById("tipoConta").value;
+    const cartao = document.getElementById("cartao").value;
+    const parcelas = parseInt(document.getElementById("parcelas").value);
+    const data = document.getElementById("data").value;
+    const descricao = document.getElementById("descricao").value;
+    const status = document.getElementById("status").value;
+
+    if (!valor || valor <= 0 || !tipoConta || !data) {
+      alert("Preencha corretamente os campos obrigatórios.");
+      return;
     }
-  });
+    if (tipoConta === "cartao" && !cartao) {
+      alert("Selecione o cartão.");
+      return;
+    }
 
-  Object.keys(faturas).sort().forEach(mes => {
-    const divCard = document.createElement("div");
-    divCard.className = "fatura-card";
-    divCard.innerHTML = `<h3>${mes}</h3>`;
-    Object.entries(faturas[mes]).forEach(([cartao, valor]) => {
-      divCard.innerHTML += `<p>${cartao}: R$ ${valor.toFixed(2)}</p>`;
+    compras.push({ valor, tipoConta, cartao, parcelas, data, descricao, status });
+    salvar();
+    limparCampos();
+    preencherTabela();
+  }
+
+  function limparCampos() {
+    document.getElementById("valor").value = "";
+    document.getElementById("tipoConta").value = "";
+    document.getElementById("cartao").value = "";
+    document.getElementById("parcelas").value = 1;
+    document.getElementById("descricao").value = "";
+    document.getElementById("status").value = "pendente";
+    document.getElementById("data").value = getDataHoje();
+    toggleCartao();
+  }
+
+  function excluirCompra(i) {
+    if (confirm("Excluir esta compra?")) {
+      compras.splice(i, 1);
+      salvar();
+      preencherTabela();
+    }
+  }
+
+  function toggleStatus(i) {
+    compras[i].status = (compras[i].status === "pago") ? "pendente" : "pago";
+    salvar();
+    preencherTabela();
+  }
+
+  function preencherTabela() {
+    const filtro = document.getElementById("filtroStatus").value;
+    const tbody = document.querySelector("#tabelaCompras tbody");
+    tbody.innerHTML = "";
+
+    compras.sort((a,b)=> new Date(b.data) - new Date(a.data));
+
+    compras.forEach((c,i)=>{
+      if (filtro !== "todos" && c.status !== filtro) return;
+
+      let statusClass = "status-pendente";
+      if (c.status === "pago") statusClass = "status-pago";
+      else {
+        const hoje = new Date().toISOString().split("T")[0];
+        if (c.data < hoje) statusClass = "status-vencido";
+      }
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>R$ ${c.valor.toFixed(2)}</td>
+        <td>${c.tipoConta}</td>
+        <td>${c.tipoConta === "cartao" ? c.cartao : "-"}</td>
+        <td>${c.data}</td>
+        <td>${c.descricao || "-"}</td>
+        <td class="${statusClass}">${c.status}</td>
+        <td>
+          <button onclick="toggleStatus(${i})">✔️</button>
+          <button onclick="excluirCompra(${i})">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
     });
-    divCard.addEventListener("click", ()=> detalharMes(mes));
-    futurasDiv.appendChild(divCard);
-  });
-}
 
-// Detalhar mês
-function detalharMes(mes) {
-  const detalheDiv = document.getElementById("detalheMesDiv");
-  detalheDiv.innerHTML = `<h4>Detalhes do mês: ${mes}</h4>`;
-  compras.filter(c => {
-    const data = new Date(c.data);
-    let mesCompra = data.getMonth()+1;
-    let anoCompra = data.getFullYear();
-    for(let i=0;i<c.parcelas;i++){
-      let mesFatura = mesCompra+i;
-      let anoFatura = anoCompra;
-      if(mesFatura>12){ mesFatura-=12; anoFatura+=1; }
-      const mesChave = `${anoFatura}-${String(mesFatura).padStart(2,'0')}`;
-      if(mesChave===mes) return true;
-    }
-    return false;
-  }).forEach(c=>{
-    const valorParcela = c.valor / c.parcelas;
-    detalheDiv.innerHTML += `<p>${c.cartao} - ${c.descricao} - R$ ${valorParcela.toFixed(2)} (${c.parcelas}x)</p>`;
-  });
-  detalheDiv.style.display = "block";
-}
+    preencherResumoMensal();
+  }
 
-window.addEventListener("load", carregarCompras);
+  function preencherResumoMensal() {
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth()+1;
+    const anoAtual = hoje.getFullYear();
+
+    let total=0, pagos=0, pendentes=0;
+    compras.forEach(c=>{
+      const [ano,mes] = c.data.split("-").map(Number);
+      if (ano===anoAtual && mes===mesAtual) {
+        total+=c.valor;
+        if(c.status==="pago") pagos+=c.valor;
+        else pendentes+=c.valor;
+      }
+    });
+
+    const resumo = document.getElementById("resumoMensal");
+    resumo.innerHTML = `
+      <h3>Resumo do mês</h3>
+      <p>Total: R$ ${total.toFixed(2)}</p>
+      <p class="status-pago">Pago: R$ ${pagos.toFixed(2)}</p>
+      <p class="status-pendente">Pendente: R$ ${pendentes.toFixed(2)}</p>
+      <p>Concluído: ${total?((pagos/total*100).toFixed(1)):0}%</p>
+    `;
+  }
 </script>
+
 </body>
 </html>
