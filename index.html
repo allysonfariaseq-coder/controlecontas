@@ -5,120 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Controle de Compras & Faturas</title>
   <style>
-    :root {
-      --cor-primaria: #4a90e2;
-      --cor-secundaria: #f5f7fa;
-      --cor-borda: #ccc;
-      --cor-texto: #333;
-      --raio: 8px;
-      --espaco: 12px;
-    }
-
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: var(--cor-secundaria);
-      color: var(--cor-texto);
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
     }
-
-    .container {
-      background: white;
-      border-radius: var(--raio);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-    }
-
     h1, h2 {
       text-align: center;
-      color: var(--cor-primaria);
     }
-
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
     label {
       display: block;
-      margin-top: var(--espaco);
-      margin-bottom: 4px;
+      margin-top: 10px;
     }
-
     input, select, button {
-      width: 100%;
+      margin-top: 5px;
       padding: 8px;
-      margin-bottom: var(--espaco);
-      border: 1px solid var(--cor-borda);
-      border-radius: var(--raio);
-      font-size: 0.95rem;
+      width: 100%;
+      box-sizing: border-box;
     }
-
     button {
-      background: var(--cor-primaria);
+      margin-top: 15px;
+      background: #007bff;
       color: white;
       border: none;
       cursor: pointer;
-      transition: background 0.3s;
+      border-radius: 5px;
     }
-
     button:hover {
-      background: #357abd;
+      background: #0056b3;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-
     th, td {
-      border: 1px solid var(--cor-borda);
-      padding: 6px;
+      border: 1px solid #ddd;
+      padding: 8px;
       text-align: center;
-      font-size: 0.9rem;
     }
-
     th {
-      background: var(--cor-primaria);
+      background: #007bff;
       color: white;
     }
-
-    .status-pago {
-      color: green;
-      font-weight: bold;
-    }
-
-    .status-pendente {
-      color: orange;
-      font-weight: bold;
-    }
-
-    .status-vencido {
-      color: red;
-      font-weight: bold;
-    }
-
-    .resumo-mensal {
-      margin-top: 20px;
-      background: #f0f4fb;
-      padding: 12px;
-      border-radius: var(--raio);
-    }
-
-    .filtros {
-      margin-top: 10px;
-      text-align: right;
+    .card {
+      background: #f0f8ff;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-
   <div class="container">
     <h1>Controle de Compras</h1>
-
-    <!-- Formulário -->
-    <label for="valor">Valor da compra</label>
-    <input type="number" id="valor" placeholder="Ex: 120.50" step="0.01" min="0.01">
-
-    <label for="tipoConta">Tipo de conta</label>
+    <label>Valor da compra:</label>
+    <input type="number" id="valor" placeholder="Ex: 120.50">
+    
+    <label>Tipo de conta:</label>
     <select id="tipoConta" onchange="toggleCartao()">
       <option value="">Selecione</option>
       <option value="cartao">Cartão de crédito</option>
@@ -126,68 +78,47 @@
     </select>
 
     <div id="campoCartao" style="display:none;">
-      <label for="cartao">Cartão</label>
+      <label>Cartão:</label>
       <select id="cartao">
         <option value="">Selecione o cartão</option>
         <option value="Nubank">Nubank</option>
         <option value="Inter">Inter</option>
         <option value="Itaú">Itaú</option>
-        <option value="Santander">Santander</option>
       </select>
     </div>
-
-    <label for="parcelas">Parcelas</label>
-    <input type="number" id="parcelas" min="1" value="1">
-
-    <label for="data">Data da compra</label>
+    
+    <label>Parcelas:</label>
+    <input type="number" id="parcelas" value="1" min="1">
+    
+    <label>Data da compra:</label>
     <input type="date" id="data">
-
-    <label for="descricao">Descrição</label>
+    
+    <label>Descrição:</label>
     <input type="text" id="descricao" placeholder="Ex: Supermercado">
 
-    <label for="status">Status</label>
-    <select id="status">
-      <option value="pendente">Pendente</option>
-      <option value="pago">Pago</option>
-    </select>
+    <button onclick="adicionarCompra()">Adicionar Compra</button>
 
-    <button onclick="adicionarCompra()">Adicionar</button>
-
-    <!-- Filtro -->
-    <div class="filtros">
-      <label for="filtroStatus">Filtrar: </label>
-      <select id="filtroStatus" onchange="preencherTabela()">
-        <option value="todos">Todos</option>
-        <option value="pago">Pagos</option>
-        <option value="pendente">Pendentes</option>
-      </select>
+    <div class="card">
+      <h2>Resumo por Cartão</h2>
+      <div id="resumo"></div>
     </div>
 
-    <!-- Tabela -->
-    <table id="tabelaCompras">
-      <thead>
-        <tr>
-          <th>Valor</th>
-          <th>Tipo</th>
-          <th>Cartão</th>
-          <th>Data</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+    <div class="card">
+      <h2>Detalhamento do Mês</h2>
+      <div id="detalhamento"></div>
+    </div>
 
-    <!-- Resumo Mensal -->
-    <div class="resumo-mensal" id="resumoMensal"></div>
+    <div class="card">
+      <h2>Faturas Futuras</h2>
+      <div id="futuras"></div>
+    </div>
   </div>
 
 <script>
-  let compras = JSON.parse(localStorage.getItem('compras')) || [];
+  let compras = JSON.parse(localStorage.getItem("compras")) || [];
 
   function salvar() {
-    localStorage.setItem('compras', JSON.stringify(compras));
+    localStorage.setItem("compras", JSON.stringify(compras));
   }
 
   function getDataHoje() {
@@ -200,7 +131,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("data").value = getDataHoje();
-    preencherTabela();
+    atualizar();
   });
 
   function toggleCartao() {
@@ -215,109 +146,111 @@
     const parcelas = parseInt(document.getElementById("parcelas").value);
     const data = document.getElementById("data").value;
     const descricao = document.getElementById("descricao").value;
-    const status = document.getElementById("status").value;
 
-    if (!valor || valor <= 0 || !tipoConta || !data) {
-      alert("Preencha corretamente os campos obrigatórios.");
+    if (!valor || !tipoConta || !data) {
+      alert("Preencha todos os campos obrigatórios!");
       return;
     }
     if (tipoConta === "cartao" && !cartao) {
-      alert("Selecione o cartão.");
+      alert("Selecione o cartão!");
       return;
     }
 
-    compras.push({ valor, tipoConta, cartao, parcelas, data, descricao, status });
+    compras.push({ valor, tipoConta, cartao, parcelas, data, descricao });
     salvar();
-    limparCampos();
-    preencherTabela();
-  }
+    atualizar();
 
-  function limparCampos() {
     document.getElementById("valor").value = "";
     document.getElementById("tipoConta").value = "";
     document.getElementById("cartao").value = "";
     document.getElementById("parcelas").value = 1;
     document.getElementById("descricao").value = "";
-    document.getElementById("status").value = "pendente";
     document.getElementById("data").value = getDataHoje();
     toggleCartao();
   }
 
-  function excluirCompra(i) {
-    if (confirm("Excluir esta compra?")) {
-      compras.splice(i, 1);
-      salvar();
-      preencherTabela();
+  function atualizar() {
+    resumoPorCartao();
+    detalharMes();
+    faturasFuturas();
+  }
+
+  function resumoPorCartao() {
+    const resumo = {};
+    compras.forEach(c => {
+      if (c.tipoConta === "cartao") {
+        resumo[c.cartao] = (resumo[c.cartao] || 0) + c.valor;
+      }
+    });
+    let html = "";
+    for (let cartao in resumo) {
+      html += `<p><strong>${cartao}:</strong> R$ ${resumo[cartao].toFixed(2)}</p>`;
     }
+    document.getElementById("resumo").innerHTML = html || "<p>Nenhum gasto com cartão.</p>";
   }
 
-  function toggleStatus(i) {
-    compras[i].status = (compras[i].status === "pago") ? "pendente" : "pago";
-    salvar();
-    preencherTabela();
-  }
-
-  function preencherTabela() {
-    const filtro = document.getElementById("filtroStatus").value;
-    const tbody = document.querySelector("#tabelaCompras tbody");
-    tbody.innerHTML = "";
-
-    compras.sort((a,b)=> new Date(b.data) - new Date(a.data));
-
-    compras.forEach((c,i)=>{
-      if (filtro !== "todos" && c.status !== filtro) return;
-
-      let statusClass = "status-pendente";
-      if (c.status === "pago") statusClass = "status-pago";
-      else {
-        const hoje = new Date().toISOString().split("T")[0];
-        if (c.data < hoje) statusClass = "status-vencido";
-      }
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>R$ ${c.valor.toFixed(2)}</td>
-        <td>${c.tipoConta}</td>
-        <td>${c.tipoConta === "cartao" ? c.cartao : "-"}</td>
-        <td>${c.data}</td>
-        <td>${c.descricao || "-"}</td>
-        <td class="${statusClass}">${c.status}</td>
-        <td>
-          <button onclick="toggleStatus(${i})">✔️</button>
-          <button onclick="excluirCompra(${i})">🗑️</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    preencherResumoMensal();
-  }
-
-  function preencherResumoMensal() {
+  function detalharMes() {
     const hoje = new Date();
-    const mesAtual = hoje.getMonth()+1;
+    const mesAtual = hoje.getMonth() + 1;
     const anoAtual = hoje.getFullYear();
+    let html = "<table><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Cartão</th><th>Parcelas</th></tr>";
+    let temDados = false;
 
-    let total=0, pagos=0, pendentes=0;
-    compras.forEach(c=>{
-      const [ano,mes] = c.data.split("-").map(Number);
-      if (ano===anoAtual && mes===mesAtual) {
-        total+=c.valor;
-        if(c.status==="pago") pagos+=c.valor;
-        else pendentes+=c.valor;
+    compras.forEach(c => {
+      const [ano, mes] = c.data.split("-").map(Number);
+      if (ano === anoAtual && mes === mesAtual) {
+        html += `<tr>
+          <td>${c.data}</td>
+          <td>${c.descricao}</td>
+          <td>R$ ${c.valor.toFixed(2)}</td>
+          <td>${c.tipoConta === "cartao" ? c.cartao : "-"}</td>
+          <td>${c.parcelas}x</td>
+        </tr>`;
+        temDados = true;
+      }
+    });
+    html += "</table>";
+    document.getElementById("detalhamento").innerHTML = temDados ? html : "<p>Nenhuma compra no mês atual.</p>";
+  }
+
+  function faturasFuturas() {
+    const hoje = new Date();
+    const futuras = {};
+
+    compras.forEach(c => {
+      if (c.tipoConta === "cartao" && c.parcelas > 1) {
+        let dataCompra = new Date(c.data);
+        for (let i = 0; i < c.parcelas; i++) {
+          let vencimento = new Date(dataCompra);
+          vencimento.setMonth(vencimento.getMonth() + i);
+          const chave = `${vencimento.getFullYear()}-${String(vencimento.getMonth() + 1).padStart(2, '0')}`;
+          futuras[chave] = futuras[chave] || [];
+          futuras[chave].push({
+            descricao: c.descricao,
+            valor: c.valor / c.parcelas,
+            cartao: c.cartao,
+            parcela: `${i+1}/${c.parcelas}`
+          });
+        }
       }
     });
 
-    const resumo = document.getElementById("resumoMensal");
-    resumo.innerHTML = `
-      <h3>Resumo do mês</h3>
-      <p>Total: R$ ${total.toFixed(2)}</p>
-      <p class="status-pago">Pago: R$ ${pagos.toFixed(2)}</p>
-      <p class="status-pendente">Pendente: R$ ${pendentes.toFixed(2)}</p>
-      <p>Concluído: ${total?((pagos/total*100).toFixed(1)):0}%</p>
-    `;
+    let html = "";
+    for (let mes in futuras) {
+      html += `<h3>${mes}</h3><table>
+        <tr><th>Descrição</th><th>Parcela</th><th>Valor</th><th>Cartão</th></tr>`;
+      futuras[mes].forEach(f => {
+        html += `<tr>
+          <td>${f.descricao}</td>
+          <td>${f.parcela}</td>
+          <td>R$ ${f.valor.toFixed(2)}</td>
+          <td>${f.cartao}</td>
+        </tr>`;
+      });
+      html += "</table>";
+    }
+    document.getElementById("futuras").innerHTML = html || "<p>Nenhuma fatura futura.</p>";
   }
 </script>
-
 </body>
 </html>
